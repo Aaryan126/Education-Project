@@ -52,6 +52,14 @@ export type ActiveLearningCheckContext = {
   concept: string;
 };
 
+export type LearningCheckEvaluationContext = {
+  learnerAnswer: string;
+  status: LearningCheckStatus;
+  concept: string;
+  feedback: string;
+  confidence: number;
+};
+
 export type TutorRequest = {
   learningContext?: LearningContext | null;
   messages: ConversationMessage[];
@@ -66,6 +74,7 @@ export type TutorRequest = {
   learnerProfile?: LearnerProfile | null;
   turnIntent?: TutorTurnIntent;
   activeLearningCheck?: ActiveLearningCheckContext | null;
+  learningCheckEvaluation?: LearningCheckEvaluationContext | null;
 };
 
 export type TutorResponse = {

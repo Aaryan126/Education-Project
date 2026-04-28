@@ -6,7 +6,7 @@ The main client experience lives in `src/app/page.tsx`. It owns session state, m
 
 `src/components/CameraCapture.tsx` handles material input. `src/components/ConversationPanel.tsx` renders messages, auto-scrolls the transcript, highlights the active phrase during speech playback, and provides per-message copy/edit controls. `src/components/VoiceRecorder.tsx` manages hands-free microphone capture.
 
-Learning progress and session memory state are also owned by `src/app/page.tsx`. A pending retrieval check is created only after the assistant message has been revealed and speech playback has completed. The next learner reply is evaluated, tagged to a concept, and surfaced in the Progress screen. A rolling session memory is returned by `/api/tutor/respond` and persisted for saved sessions.
+Learning progress and session memory state are also owned by `src/app/page.tsx`. A pending retrieval check is created only after the assistant message has been revealed and speech playback has completed. The next learner reply is evaluated before the next tutor response, tagged to a concept, folded into concept mastery, and surfaced in the Progress screen. A rolling session memory is returned by `/api/tutor/respond` and persisted for saved sessions.
 
 ## Server Routes
 
@@ -18,7 +18,7 @@ Learning progress and session memory state are also owned by `src/app/page.tsx`.
 - `/api/speech/synthesize/stream`: streams PCM TTS audio for faster playback startup.
 - `/api/speech/turn`: runs Smart Turn or falls back to VAD-only endpointing.
 - `/api/sessions`, `/api/materials`, `/api/usage/tts`: Supabase-backed persistence and usage tracking.
-- `/api/progress/checks`: upserts and deletes saved learning checks for persisted sessions.
+- `/api/progress/checks`: upserts and deletes saved learning checks, and updates concept mastery for scored checks.
 - `PATCH /api/sessions/messages`: updates edited message text for saved sessions.
 
 ## Material Extraction
@@ -35,7 +35,7 @@ Material processing starts in `src/app/page.tsx`. Images are sent to `/api/visio
 4. Call the configured provider from `src/lib/llm`. Anthropic uses a strict tool schema; Z.ai uses JSON mode.
 5. Return structured tutor output, including response, follow-up question, target concept, tutor move, memory update candidates, and the updated session memory.
 
-The tutor remains model-stateless. Durable continuity comes from app-owned memory, saved messages, and saved progress checks.
+The tutor remains model-stateless. Durable continuity comes from app-owned memory, saved messages, saved progress checks, and concept mastery rows.
 
 ## Hands-Free Voice Flow
 
@@ -67,13 +67,16 @@ The progress loop uses actual learner answers:
 2. The client reveals the assistant text and speaks it.
 3. After TTS completion, the follow-up question becomes the active progress check.
 4. The learner answers by voice or text.
-5. `/api/tutor/evaluate` scores the answer and returns a concept, feedback, confidence, and status.
-6. `/api/progress/checks` saves the check row when the current session has a Supabase `session_id`.
+5. The client routes active-check answers through `/api/tutor/evaluate` before calling the tutor again.
+6. `/api/tutor/evaluate` scores the answer and returns a concept, feedback, confidence, and status.
+7. The scored check updates local concept mastery immediately.
+8. `/api/progress/checks` saves the check row and updates `concept_mastery` when the current session has a Supabase `session_id`.
+9. `/api/tutor/respond` receives the evaluation context and uses it for corrective feedback before moving to the next small step.
 
-Saved checks are loaded alongside a session and rendered in the Progress screen as concept cards, recent checks, status counts, and next review times. The app tolerates a missing `learning_checks` table so older Supabase projects can still load sessions before running the latest schema.
+Saved checks and concept mastery rows are loaded alongside a session and rendered in the Progress screen as concept cards, mastery score, accuracy, recent checks, status counts, and next review times. The browser remembers the last saved session ID and keeps a small per-session progress cache, then merges that cache with Supabase on reload. This covers fast-refresh cases where the UI showed an evaluated check before the background save finished. The app tolerates missing progress tables so older Supabase projects can still load sessions before running the latest schema.
 
 ## Persistence
 
-Supabase stores sessions, materials, session memories, messages, learning checks, and TTS usage. The schema is in `supabase/schema.sql`. Runtime access uses the server-side Supabase service key only; never expose it in client code or committed files.
+Supabase stores sessions, materials, session memories, messages, learning checks, concept mastery, and TTS usage. The schema is in `supabase/schema.sql`. Runtime access uses the server-side Supabase service key only; never expose it in client code or committed files.
 
 `supabase/schema.sql` is written to be rerunnable in the Supabase SQL Editor. It drops and recreates RPC functions before defining them, because PostgreSQL cannot change an existing function return type in place.

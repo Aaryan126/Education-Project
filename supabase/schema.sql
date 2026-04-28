@@ -51,6 +51,20 @@ create table if not exists public.learning_checks (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.concept_mastery (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.sessions(id) on delete cascade,
+  owner_key text not null default 'main',
+  material_id uuid references public.materials(id) on delete set null,
+  concept text not null,
+  attempts integer not null default 0,
+  correct_count integer not null default 0,
+  mastery_score double precision not null default 0,
+  last_status text not null check (last_status in ('got-it', 'needs-practice', 'confused')),
+  next_review_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.session_memories (
   session_id uuid primary key references public.sessions(id) on delete cascade,
   owner_key text not null default 'main',
@@ -74,6 +88,14 @@ create index if not exists materials_owner_session_idx on public.materials(owner
 create index if not exists messages_owner_session_created_idx on public.messages(owner_key, session_id, created_at);
 create index if not exists learning_checks_owner_session_created_idx on public.learning_checks(owner_key, session_id, created_at desc);
 create index if not exists learning_checks_owner_next_review_idx on public.learning_checks(owner_key, next_review_at);
+create index if not exists concept_mastery_owner_session_review_idx on public.concept_mastery(owner_key, session_id, next_review_at);
+create unique index if not exists concept_mastery_owner_session_material_concept_idx
+  on public.concept_mastery(
+    owner_key,
+    session_id,
+    coalesce(material_id, '00000000-0000-0000-0000-000000000000'::uuid),
+    lower(concept)
+  );
 create index if not exists session_memories_owner_idx on public.session_memories(owner_key, updated_at desc);
 
 drop function if exists public.increment_tts_usage_month(text, text, text, integer);

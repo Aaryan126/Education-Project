@@ -50,6 +50,16 @@ const requestSchema = z.object({
       concept: z.string().min(1)
     })
     .nullable()
+    .optional(),
+  learningCheckEvaluation: z
+    .object({
+      learnerAnswer: z.string().min(1),
+      status: z.enum(["got-it", "needs-practice", "confused"]),
+      concept: z.string().min(1),
+      feedback: z.string().default(""),
+      confidence: z.coerce.number().finite().catch(0.5)
+    })
+    .nullable()
     .optional()
 });
 
@@ -87,7 +97,8 @@ export async function POST(request: Request) {
       sessionMemory,
       learnerProfile,
       turnIntent,
-      activeLearningCheck: body.activeLearningCheck ?? null
+      activeLearningCheck: body.activeLearningCheck ?? null,
+      learningCheckEvaluation: body.learningCheckEvaluation ?? null
     };
     const tutorResponse = await provider.generateTutorResponse(tutorInput);
     const nextSessionMemory = updateSessionMemory(tutorInput, tutorResponse);

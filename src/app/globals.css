@@ -2244,6 +2244,7 @@ select:disabled {
   border-top: 1px solid #edf1ee;
   padding-top: 12px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -2415,6 +2416,21 @@ select:disabled {
   flex-direction: column;
   gap: 18px;
   overflow: hidden;
+}
+
+.session-shell > .landing-sidebar {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.session-main > .sessions-screen,
+.session-main > .materials-screen,
+.session-main > .settings-screen,
+.session-main > .progress-screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 32px;
 }
 
 .session-header {

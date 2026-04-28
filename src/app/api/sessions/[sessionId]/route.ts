@@ -2,6 +2,8 @@ import { z } from "zod";
 import { getErrorMessage, jsonError, jsonOk } from "@/lib/api";
 import { getSupabaseAdmin, getSupabaseOwnerKey } from "@/lib/supabase/server";
 import { loadStoredSessionMemory } from "@/lib/tutor/sessionMemoryStore";
+import type { ConceptMastery } from "@/lib/tutor/mastery";
+import type { LearningCheckStatus } from "@/lib/tutor/types";
 
 export const runtime = "nodejs";
 
@@ -36,6 +38,43 @@ function isMissingLearningChecksTable(error: SupabaseErrorLike | null | undefine
     error?.code === "42P01" ||
     (message.includes("relation") && message.includes("learning_checks") && message.includes("does not exist"))
   );
+}
+
+function isMissingConceptMasteryTable(error: SupabaseErrorLike | null | undefined) {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    error?.code === "42P01" ||
+    (message.includes("relation") && message.includes("concept_mastery") && message.includes("does not exist"))
+  );
+}
+
+type ConceptMasteryRow = {
+  id: string;
+  session_id: string;
+  material_id: string | null;
+  concept: string;
+  attempts: number;
+  correct_count: number;
+  mastery_score: number;
+  last_status: LearningCheckStatus;
+  next_review_at: string | null;
+  updated_at: string;
+};
+
+function mapConceptMastery(row: ConceptMasteryRow): ConceptMastery {
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    materialId: row.material_id,
+    concept: row.concept,
+    attempts: row.attempts,
+    correctCount: row.correct_count,
+    masteryScore: row.mastery_score,
+    lastStatus: row.last_status,
+    nextReviewAt: row.next_review_at,
+    updatedAt: row.updated_at
+  };
 }
 
 async function removeStoredMaterials(materials: StoredMaterialRef[]) {
@@ -91,7 +130,8 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
     const [
       { data: materialRows, error: materialsError },
       { data: messageRows, error: messagesError },
-      { data: learningCheckRows, error: learningChecksError }
+      { data: learningCheckRows, error: learningChecksError },
+      { data: conceptMasteryRows, error: conceptMasteryError }
     ] = await Promise.all([
       supabase
         .from("materials")
@@ -112,7 +152,13 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
         )
         .eq("owner_key", ownerKey)
         .eq("session_id", sessionId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("concept_mastery")
+        .select("id,session_id,material_id,concept,attempts,correct_count,mastery_score,last_status,next_review_at,updated_at")
+        .eq("owner_key", ownerKey)
+        .eq("session_id", sessionId)
+        .order("next_review_at", { ascending: true, nullsFirst: false })
     ]);
 
     if (materialsError) {
@@ -125,6 +171,10 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
 
     if (learningChecksError && !isMissingLearningChecksTable(learningChecksError)) {
       throw new Error(learningChecksError.message);
+    }
+
+    if (conceptMasteryError && !isMissingConceptMasteryTable(conceptMasteryError)) {
+      throw new Error(conceptMasteryError.message);
     }
 
     const materials = await Promise.all(
@@ -188,6 +238,9 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
             answeredAt: check.answered_at,
             nextReviewAt: check.next_review_at
           })),
+      conceptMasteries: conceptMasteryError
+        ? []
+        : ((conceptMasteryRows ?? []) as ConceptMasteryRow[]).map(mapConceptMastery),
       sessionMemory: storedMemory?.sessionMemory,
       learnerProfile: storedMemory?.learnerProfile
     });

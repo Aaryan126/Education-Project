@@ -10,7 +10,7 @@ Phloem is a Next.js learning companion that turns a captured image, PDF, or Word
 4. Generate a structured tutor response with Anthropic or Z.ai using layered context: recent turns, session memory, a lightweight single-user learner profile, and the extracted learning context.
 5. Speak the response with browser TTS, OpenAI TTS, or Google Cloud TTS.
 6. After speech playback completes, ask one retrieval-practice progress check.
-7. Score the learner's answer as `got-it`, `needs-practice`, or `confused`, then save the concept progress in Supabase.
+7. If a check is active, score the learner's answer first, update concept mastery, then pass the evaluation into the next tutor turn for corrective feedback.
 8. In hands-free mode, browser Silero VAD segments speech and `/api/speech/turn` uses Smart Turn when available before transcription.
 
 ## Setup
@@ -31,7 +31,7 @@ If you want real local Smart Turn, place `smart-turn-v3.2-cpu.onnx` at `models/s
 
 Copy `.env.example` to `.env` and fill the provider keys you use. Keep Supabase service role keys in `.env` only.
 
-If you use Supabase persistence, run `supabase/schema.sql` in the Supabase SQL Editor. The schema creates sessions, materials, messages, learning checks, session memories, and TTS usage tables. It is intended to be rerunnable; RPC functions are dropped and recreated without deleting usage rows.
+If you use Supabase persistence, run `supabase/schema.sql` in the Supabase SQL Editor. The schema creates sessions, materials, messages, learning checks, concept mastery, session memories, and TTS usage tables. It is intended to be rerunnable; RPC functions are dropped and recreated without deleting usage rows.
 
 ## Development
 
@@ -46,9 +46,11 @@ The VAD assets are copied into `public/vad` by `postinstall`; they are generated
 
 ## Progress Checks
 
-Phloem now tracks learning progress from retrieval practice instead of only model-estimated understanding. Each tutor answer ends with a small check question after TTS playback finishes. The learner answers by voice or text, `/api/tutor/evaluate` scores the answer, and `/api/progress/checks` saves the result to Supabase when a session is persisted.
+Phloem now tracks learning progress from retrieval practice instead of only model-estimated understanding. Each tutor answer ends with a small check question after TTS playback finishes. When the learner answers by voice or text, the app first calls `/api/tutor/evaluate`, then sends the evaluation into `/api/tutor/respond` so the tutor can give targeted corrective feedback instead of treating the answer like a normal question.
 
-The Progress screen groups saved checks by concept and shows status, feedback, score, and next review time. If Supabase is not configured or the `learning_checks` table has not been migrated yet, checks still work in memory for the current session.
+`/api/progress/checks` saves the raw check and updates `concept_mastery` with attempts, correct count, mastery score, last status, and the next spaced review time. The Progress screen shows mastery by concept plus recent checks. If Supabase is not configured or the latest progress tables have not been migrated yet, checks and mastery still work in memory for the current session.
+
+The browser also remembers the last saved session ID and keeps a small per-session progress cache. On refresh, Phloem reopens the last saved session and merges cached progress with Supabase data so a recently answered check does not disappear if the page reloads before the network save finishes.
 
 ## Material Extraction
 

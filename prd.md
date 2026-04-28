@@ -227,18 +227,20 @@ Phloem now separates real learning progress from model-guessed understanding. Th
    - `got-it`
    - `needs-practice`
    - `confused`
-6. The check is saved through `/api/progress/checks` when the session exists in Supabase.
+6. The scored check updates concept mastery locally.
+7. The check and concept mastery row are saved through `/api/progress/checks` when the session exists in Supabase.
+8. The evaluation is passed into the next tutor turn so feedback is corrective instead of treating the check answer as a normal user question.
 
 **Progress dashboard:**
-- Groups checks by concept, not just by session
+- Groups checks and mastery by concept, not just by session
 - Shows answered check count, got-it count, needs-practice count, confused count
-- Shows latest question, learner answer, tutor feedback, and next review time
+- Shows latest question, learner answer, tutor feedback, mastery score, accuracy, and next review time
 - Supports practice prompts for a concept from the Progress screen
 - Continues to work in memory when Supabase is not configured
 
 ### 5.9 Session Persistence & History (Supabase)
 
-**Database schema (6 tables):**
+**Database schema (7 tables):**
 
 | Table | Purpose |
 |---|---|
@@ -247,16 +249,19 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 | `session_memories` | Rolling session memory and lightweight single-user learner profile |
 | `messages` | Conversation history (role, content, client-side ID for optimistic UI) |
 | `learning_checks` | Retrieval-practice answers, concept status, feedback, and spaced review timestamps |
+| `concept_mastery` | Per-concept attempts, correct count, mastery score, last status, and next scheduled review |
 | `tts_usage_months` | Monthly TTS character/request tracking per provider |
 
 **Features:**
 - Sessions auto-saved on start (materials stored in Supabase Storage bucket)
 - Messages saved optimistically after each tutor exchange
 - Learning checks saved when created, scored, or skipped
+- Concept mastery updated after each scored retrieval check
 - Session list view with material/message counts, last-updated sorting
 - Materials library grid with preview thumbnails, download links, session linkage
-- Full session reload (restores materials, messages, language settings, session memory, learner profile, and progress checks)
-- Delete session (cascades to materials, messages, and learning checks)
+- Full session reload (restores materials, messages, language settings, session memory, learner profile, progress checks, and concept mastery)
+- Browser refresh restores the last saved session and merges local progress cache with Supabase progress
+- Delete session (cascades to materials, messages, learning checks, and concept mastery)
 - Delete individual material (removes storage file + DB row)
 - Graceful degradation when Supabase is not configured (in-memory only)
 
@@ -364,7 +369,7 @@ ConversationPanel  /api/speech/synthesize
 | TTS (secondary) | OpenAI gpt-4o-mini-tTS | MP3 + PCM streaming support |
 | TTS (fallback) | Browser Web Speech API | Zero-config, works everywhere |
 | VAD | @ricky0123/vad-web | Silero VAD on ONNX Runtime Web (client-side) |
-| Database | Supabase (PostgreSQL) | Sessions, materials, messages, learning checks, usage tracking |
+| Database | Supabase (PostgreSQL) | Sessions, materials, messages, learning checks, concept mastery, usage tracking |
 | Storage | Supabase Storage | Uploaded file blobs |
 | Validation | Zod | All API inputs and LLM outputs |
 | Icons | Lucide React | Consistent icon set |
@@ -402,11 +407,11 @@ Both providers share:
 | POST | `/api/tutor/evaluate` | Retrieval answer -> concept status and feedback |
 | GET | `/api/sessions` | List saved sessions |
 | POST | `/api/sessions` | Create new session with materials |
-| GET | `/api/sessions/[id]` | Load full session (materials + messages + progress checks) |
+| GET | `/api/sessions/[id]` | Load full session (materials + messages + progress checks + concept mastery) |
 | DELETE | `/api/sessions/[id]` | Delete session (cascade) |
 | POST | `/api/sessions/messages` | Save conversation messages |
 | PATCH | `/api/sessions/messages` | Update edited conversation message text |
-| POST | `/api/progress/checks` | Upsert a learning progress check |
+| POST | `/api/progress/checks` | Upsert a learning progress check and update concept mastery |
 | DELETE | `/api/progress/checks` | Delete a skipped learning progress check |
 | GET | `/api/materials` | List saved materials library |
 | DELETE | `/api/materials/[id]` | Delete material (file + row) |
@@ -472,10 +477,11 @@ Both providers share:
 - [x] Auto-save to Supabase on session start
 - [x] Save messages after each exchange
 - [x] Save retrieval progress checks for persisted sessions
+- [x] Save concept mastery for persisted sessions
 - [x] Save session memory and learner profile for persisted sessions
 - [x] List past sessions with summary info
-- [x] Load full session (materials + messages + settings + progress checks)
-- [x] Delete sessions (cascade delete materials/messages/progress checks)
+- [x] Load full session (materials + messages + settings + progress checks + concept mastery)
+- [x] Delete sessions (cascade delete materials/messages/progress checks/concept mastery)
 - [x] Materials library with previews and downloads
 - [x] Delete individual materials
 - [x] Graceful in-memory operation without Supabase
@@ -505,9 +511,11 @@ Both providers share:
 - [x] Delay the progress check banner until TTS playback fully completes
 - [x] Accept progress-check answers by text or voice
 - [x] Score answers as got it, needs practice, or confused
+- [x] Evaluate active progress checks before the next tutor response
+- [x] Track concept mastery with attempts, correct count, mastery score, and scheduled review
 - [x] Persist checks to Supabase when a session is saved
-- [x] Load persisted checks with saved sessions
-- [x] Show concept-level progress cards, status counts, recent checks, and next review times
+- [x] Load persisted checks and concept mastery with saved sessions
+- [x] Show concept-level progress cards, mastery, status counts, recent checks, and next review times
 - [x] Delete skipped active checks from persisted progress
 
 ---

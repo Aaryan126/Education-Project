@@ -57,6 +57,13 @@ import {
   normalizeLearnerProfile,
   normalizeSessionMemory
 } from "@/lib/tutor/memory";
+import {
+  getConceptMasteryKey,
+  getLearningCheckNextReviewAt,
+  isScoredLearningCheckStatus,
+  updateConceptMasteryForResult,
+  type ConceptMastery
+} from "@/lib/tutor/mastery";
 
 // Re-exported for use by StepIndicator
 export type SessionPhase = "capture" | "review" | "learn";
@@ -101,6 +108,14 @@ type SaveSessionRequest = {
 type SaveSessionResponse = {
   persisted: boolean;
   sessionId: string | null;
+  reason?: string;
+};
+
+type SaveLearningCheckResponse = {
+  persisted: boolean;
+  checkId?: string;
+  mastery?: ConceptMastery | null;
+  masteryPersisted?: boolean;
   reason?: string;
 };
 
@@ -156,6 +171,7 @@ type LoadedSessionResponse = {
   sessionMemory?: SessionMemory;
   learnerProfile?: LearnerProfile;
   learningChecks?: LearningCheck[];
+  conceptMasteries?: ConceptMastery[];
 };
 
 type TtsUsageResponse = {
@@ -192,9 +208,24 @@ type ActiveLearningCheck = LearningCheck & {
   status: "unanswered" | "checking";
 };
 
+type EvaluatedLearningCheck = {
+  check: LearningCheck & { status: LearningCheckStatus };
+  evaluation: LearningCheckEvaluation;
+};
+
+type SessionProgressCache = {
+  sessionId: string;
+  learningChecks: LearningCheck[];
+  conceptMasteries: ConceptMastery[];
+  savedAt: string;
+};
+
 const DEFAULT_TTS_SPEECH_RATE = 1;
 const MIN_TTS_SPEECH_RATE = 0.75;
 const MAX_TTS_SPEECH_RATE = 1.5;
+const LAST_SESSION_STORAGE_KEY = "phloem:last-session-id";
+const SESSION_PROGRESS_STORAGE_PREFIX = "phloem:session-progress:";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const LANGUAGE_OPTIONS = [
   { value: "en", label: "English" },
@@ -257,6 +288,104 @@ function makeMessage(role: ConversationMessage["role"], content: string): Conver
 
 function isPdfMaterial(material: Pick<CapturedInput, "mimeType" | "name">) {
   return material.mimeType === "application/pdf" || /\.pdf$/i.test(material.name);
+}
+
+function readLastSessionId() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const value = window.localStorage.getItem(LAST_SESSION_STORAGE_KEY);
+    return value && UUID_PATTERN.test(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberLastSessionId(nextSessionId: string | null) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    if (nextSessionId) {
+      window.localStorage.setItem(LAST_SESSION_STORAGE_KEY, nextSessionId);
+    } else {
+      window.localStorage.removeItem(LAST_SESSION_STORAGE_KEY);
+    }
+  } catch {
+    // localStorage can be unavailable in private or restricted browser modes.
+  }
+}
+
+function getSessionProgressStorageKey(nextSessionId: string) {
+  return `${SESSION_PROGRESS_STORAGE_PREFIX}${nextSessionId}`;
+}
+
+function readSessionProgressCache(nextSessionId: string): SessionProgressCache | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getSessionProgressStorageKey(nextSessionId));
+    const parsed = raw ? (JSON.parse(raw) as Partial<SessionProgressCache>) : null;
+
+    if (
+      !parsed ||
+      parsed.sessionId !== nextSessionId ||
+      !Array.isArray(parsed.learningChecks) ||
+      !Array.isArray(parsed.conceptMasteries)
+    ) {
+      return null;
+    }
+
+    return {
+      sessionId: nextSessionId,
+      learningChecks: parsed.learningChecks as LearningCheck[],
+      conceptMasteries: parsed.conceptMasteries as ConceptMastery[],
+      savedAt: typeof parsed.savedAt === "string" ? parsed.savedAt : new Date().toISOString()
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionProgressCache(
+  nextSessionId: string,
+  learningChecks: LearningCheck[],
+  conceptMasteries: ConceptMastery[]
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      getSessionProgressStorageKey(nextSessionId),
+      JSON.stringify({
+        sessionId: nextSessionId,
+        learningChecks: learningChecks.slice(0, 80),
+        conceptMasteries: conceptMasteries.slice(0, 80),
+        savedAt: new Date().toISOString()
+      } satisfies SessionProgressCache)
+    );
+  } catch {
+    // Ignore quota or storage permission errors. Supabase remains the source of truth.
+  }
+}
+
+function clearSessionProgressCache(nextSessionId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(getSessionProgressStorageKey(nextSessionId));
+  } catch {
+    // Ignore storage permission errors.
+  }
 }
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
@@ -324,14 +453,14 @@ async function deleteSavedMaterialRequest(materialId: string) {
 
 async function saveLearningCheckRequest(sessionId: string | null, check: LearningCheck) {
   if (!sessionId) {
-    return;
+    return null;
   }
 
-  await fetch("/api/progress/checks", {
+  return fetch("/api/progress/checks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sessionId, check })
-  }).then((response) => readJsonResponse<{ persisted: boolean }>(response));
+  }).then((response) => readJsonResponse<SaveLearningCheckResponse>(response));
 }
 
 async function deleteLearningCheckRequest(sessionId: string | null, checkId: string) {
@@ -361,16 +490,6 @@ async function evaluateLearningCheckRequest(payload: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   }).then((response) => readJsonResponse<LearningCheckEvaluation>(response));
-}
-
-function getNextReviewAt(status: LearningCheckStatus) {
-  const minutesByStatus: Record<LearningCheckStatus, number> = {
-    "got-it": 24 * 60,
-    "needs-practice": 60,
-    confused: 10
-  };
-
-  return new Date(Date.now() + minutesByStatus[status] * 60_000).toISOString();
 }
 
 function clampTtsSpeechRate(value: number) {
@@ -452,9 +571,11 @@ export default function Home() {
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [sessionMemory, setSessionMemory] = useState<SessionMemory>(() => createEmptySessionMemory());
   const [learningChecks, setLearningChecks] = useState<LearningCheck[]>([]);
+  const [conceptMasteries, setConceptMasteries] = useState<ConceptMastery[]>([]);
   const learningChecksRef = useRef<LearningCheck[]>([]);
   const [activeLearningCheckId, setActiveLearningCheckId] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
+  const autoRestoreAttemptedRef = useRef(false);
   const tutorAbortRef = useRef<AbortController | null>(null);
   const ttsAbortRef = useRef<AbortController | null>(null);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -577,6 +698,30 @@ export default function Home() {
     learningChecksRef.current = learningChecks;
   }, [learningChecks]);
 
+  useEffect(() => {
+    if (!sessionId) {
+      return;
+    }
+
+    rememberLastSessionId(sessionId);
+    writeSessionProgressCache(sessionId, learningChecks, conceptMasteries);
+  }, [conceptMasteries, learningChecks, sessionId]);
+
+  useEffect(() => {
+    if (autoRestoreAttemptedRef.current) {
+      return;
+    }
+
+    autoRestoreAttemptedRef.current = true;
+    const lastSessionId = readLastSessionId();
+
+    if (lastSessionId) {
+      void handleLoadSession(lastSessionId, { restoreOnFailure: true });
+    }
+    // This should only run once on mount so refresh can resume the last saved session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function handleMaterialReady(material: CapturedInput) {
     setError("");
     setStatus("Material added");
@@ -696,6 +841,10 @@ export default function Home() {
 
     try {
       await deleteSavedSessionRequest(nextSessionId);
+      clearSessionProgressCache(nextSessionId);
+      if (readLastSessionId() === nextSessionId) {
+        rememberLastSessionId(null);
+      }
       setSavedSessions((current) => current.filter((item) => item.id !== nextSessionId));
       setSavedMaterials((current) => current.filter((item) => item.sessionId !== nextSessionId));
 
@@ -740,7 +889,7 @@ export default function Home() {
     }
   }
 
-  async function handleLoadSession(nextSessionId: string) {
+  async function handleLoadSession(nextSessionId: string, options?: { restoreOnFailure?: boolean }) {
     setBusy(true);
     setError("");
     setSessionsError("");
@@ -778,8 +927,15 @@ export default function Home() {
           })
         )
       );
-      setLearningChecks(data.learningChecks ?? []);
-      setActiveLearningCheckId((data.learningChecks ?? []).find(isActiveLearningCheck)?.id ?? null);
+      const cachedProgress = readSessionProgressCache(data.session.id);
+      const loadedLearningChecks = mergeLearningChecks(data.learningChecks ?? [], cachedProgress?.learningChecks ?? []);
+      const restoredConceptMasteries =
+        data.conceptMasteries?.length
+          ? sortConceptMasteries(data.conceptMasteries)
+          : buildConceptMasteriesFromChecks(loadedLearningChecks, data.session.id);
+      setLearningChecks(loadedLearningChecks);
+      setConceptMasteries(mergeConceptMasteries(restoredConceptMasteries, cachedProgress?.conceptMasteries ?? []));
+      setActiveLearningCheckId(loadedLearningChecks.find(isActiveLearningCheck)?.id ?? null);
       setQuestion("");
       setPendingMaterials([]);
       setSettingsOpen(false);
@@ -789,6 +945,10 @@ export default function Home() {
       setPhase("learn");
       setStatus("Saved session loaded");
     } catch (nextError) {
+      if (options?.restoreOnFailure && readLastSessionId() === nextSessionId) {
+        rememberLastSessionId(null);
+      }
+
       setSessionsError(nextError instanceof Error ? nextError.message : "Saved session could not be loaded.");
       setStatus("Session load failed");
     } finally {
@@ -803,6 +963,7 @@ export default function Home() {
     }
 
     const queuedMaterials = pendingMaterials;
+    rememberLastSessionId(null);
     setBusy(true);
     setProcessingMaterials(true);
     setError("");
@@ -888,6 +1049,7 @@ export default function Home() {
       setSessionMemory(nextSessionMemory);
       setLearnerProfile(nextLearnerProfile);
       setLearningChecks([]);
+      setConceptMasteries([]);
       setActiveLearningCheckId(null);
       setMessages((current) => [
         ...current,
@@ -914,6 +1076,7 @@ export default function Home() {
 
   // ---- Sample mode ----
   function handleUseSample() {
+    rememberLastSessionId(null);
     const nextSessionMemory = createEmptySessionMemory();
     const nextLearnerProfile = createLearnerProfile({
       targetLanguage,
@@ -936,6 +1099,7 @@ export default function Home() {
     setSessionMemory(nextSessionMemory);
     setLearnerProfile(nextLearnerProfile);
     setLearningChecks([]);
+    setConceptMasteries([]);
     setActiveLearningCheckId(null);
     setMessages((current) => [...current, makeMessage("system", "Sample photosynthesis material loaded.")]);
     setStatus("Sample context ready");
@@ -965,13 +1129,22 @@ export default function Home() {
         setSessionId(savedSessionId);
 
         for (const check of learningChecksRef.current) {
-          void saveLearningCheckRequest(savedSessionId, check).catch(() => undefined);
+          void saveLearningCheckRequest(savedSessionId, check)
+            .then((result) => {
+              const savedMastery = result?.mastery;
+
+              if (savedMastery) {
+                setConceptMasteries((current) => mergeConceptMastery(current, savedMastery));
+              }
+            })
+            .catch(() => undefined);
         }
       })
       .catch(() => undefined);
   }
 
   function handleNewSession() {
+    rememberLastSessionId(null);
     tutorAbortRef.current?.abort();
     tutorAbortRef.current = null;
     stopTutorSpeech();
@@ -989,6 +1162,7 @@ export default function Home() {
       })
     );
     setLearningChecks([]);
+    setConceptMasteries([]);
     setActiveLearningCheckId(null);
     setMessages([]);
     setQuestion("");
@@ -1048,7 +1222,23 @@ export default function Home() {
     void deleteLearningCheckRequest(sessionId, checkId).catch(() => undefined);
   }
 
-  async function evaluateActiveLearningCheck(check: LearningCheck, learnerAnswer: string) {
+  function applyScoredLearningCheck(activeSessionId: string | null, check: LearningCheck & { status: LearningCheckStatus }) {
+    setConceptMasteries((current) => updateConceptMasteriesFromCheck(current, check, activeSessionId));
+    void saveLearningCheckRequest(activeSessionId, check)
+      .then((result) => {
+        const savedMastery = result?.mastery;
+
+        if (savedMastery) {
+          setConceptMasteries((current) => mergeConceptMastery(current, savedMastery));
+        }
+      })
+      .catch(() => undefined);
+  }
+
+  async function evaluateActiveLearningCheck(
+    check: LearningCheck,
+    learnerAnswer: string
+  ): Promise<EvaluatedLearningCheck> {
     const activeSessionId = sessionId;
     const checkingCheck: LearningCheck = {
       ...check,
@@ -1070,34 +1260,51 @@ export default function Home() {
         targetLanguage
       });
 
-      const updatedCheck: LearningCheck = {
+      const updatedCheck: LearningCheck & { status: LearningCheckStatus } = {
         ...checkingCheck,
         concept: evaluation.concept || checkingCheck.concept,
         status: evaluation.status,
         feedback: evaluation.feedback,
         confidence: evaluation.confidence,
         answeredAt: new Date().toISOString(),
-        nextReviewAt: getNextReviewAt(evaluation.status)
+        nextReviewAt: getLearningCheckNextReviewAt(evaluation.status)
       };
 
       setLearningChecks((current) =>
         current.map((item) => (item.id === check.id ? updatedCheck : item))
       );
-      void saveLearningCheckRequest(activeSessionId, updatedCheck).catch(() => undefined);
+      applyScoredLearningCheck(activeSessionId, updatedCheck);
+
+      return {
+        check: updatedCheck,
+        evaluation
+      };
     } catch {
-      const updatedCheck: LearningCheck = {
-        ...checkingCheck,
+      const fallbackEvaluation: LearningCheckEvaluation = {
         status: "needs-practice",
+        concept: checkingCheck.concept,
         feedback: "Review this idea once more, then try another short answer.",
         confidence: 0.35,
+        provider: "local"
+      };
+      const updatedCheck: LearningCheck & { status: LearningCheckStatus } = {
+        ...checkingCheck,
+        status: fallbackEvaluation.status,
+        feedback: fallbackEvaluation.feedback,
+        confidence: fallbackEvaluation.confidence,
         answeredAt: new Date().toISOString(),
-        nextReviewAt: getNextReviewAt("needs-practice")
+        nextReviewAt: getLearningCheckNextReviewAt(fallbackEvaluation.status)
       };
 
       setLearningChecks((current) =>
         current.map((item) => (item.id === check.id ? updatedCheck : item))
       );
-      void saveLearningCheckRequest(activeSessionId, updatedCheck).catch(() => undefined);
+      applyScoredLearningCheck(activeSessionId, updatedCheck);
+
+      return {
+        check: updatedCheck,
+        evaluation: fallbackEvaluation
+      };
     } finally {
       setActiveLearningCheckId((current) => (current === check.id ? null : current));
     }
@@ -1154,11 +1361,22 @@ export default function Home() {
     const controller = new AbortController();
     tutorAbortRef.current = controller;
 
-    if (checkToEvaluate) {
-      void evaluateActiveLearningCheck(checkToEvaluate, text);
-    }
-
     try {
+      let evaluatedCheck: EvaluatedLearningCheck | null = null;
+
+      if (checkToEvaluate) {
+        setStatus("Checking your answer...");
+        evaluatedCheck = await evaluateActiveLearningCheck(checkToEvaluate, text);
+
+        if (controller.signal.aborted) {
+          setTutorStopped(true);
+          setStatus("Tutor response stopped");
+          return;
+        }
+
+        setStatus("Tutor is thinking...");
+      }
+
       const tutorResponse = await fetch("/api/tutor/respond", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1175,10 +1393,19 @@ export default function Home() {
           materialId: selectedMaterial?.id ?? null,
           sessionMemory,
           learnerProfile: effectiveLearnerProfile,
-          activeLearningCheck: checkToEvaluate
+          activeLearningCheck: evaluatedCheck
             ? {
-                question: checkToEvaluate.question,
-                concept: checkToEvaluate.concept
+                question: evaluatedCheck.check.question,
+                concept: evaluatedCheck.check.concept
+              }
+            : null,
+          learningCheckEvaluation: evaluatedCheck
+            ? {
+                learnerAnswer: text,
+                status: evaluatedCheck.evaluation.status,
+                concept: evaluatedCheck.evaluation.concept,
+                feedback: evaluatedCheck.evaluation.feedback,
+                confidence: evaluatedCheck.evaluation.confidence
               }
             : null
         })
@@ -1879,6 +2106,7 @@ export default function Home() {
           ) : progressOpen ? (
             <ProgressScreen
               checks={learningChecks}
+              masteries={conceptMasteries}
               activeCheck={activeLearningCheck}
               hasMaterials={materials.length > 0}
               onOpenLearn={handleOpenLearn}
@@ -2101,6 +2329,7 @@ export default function Home() {
           ) : progressOpen ? (
             <ProgressScreen
               checks={learningChecks}
+              masteries={conceptMasteries}
               activeCheck={activeLearningCheck}
               hasMaterials={materials.length > 0}
               onOpenLearn={handleOpenLearn}
@@ -2656,11 +2885,79 @@ function formatSessionDate(value: string) {
 }
 
 function isScoredLearningCheck(check: LearningCheck): check is LearningCheck & { status: LearningCheckStatus } {
-  return check.status === "got-it" || check.status === "needs-practice" || check.status === "confused";
+  return isScoredLearningCheckStatus(check.status);
 }
 
 function isActiveLearningCheck(check: LearningCheck): check is ActiveLearningCheck {
   return check.status === "unanswered" || check.status === "checking";
+}
+
+function mergeLearningChecks(persistedChecks: LearningCheck[], cachedChecks: LearningCheck[]) {
+  const merged = new Map<string, LearningCheck>();
+
+  for (const check of cachedChecks) {
+    merged.set(check.id, check);
+  }
+
+  for (const check of persistedChecks) {
+    const existing = merged.get(check.id);
+    merged.set(check.id, existing ? pickMoreCompleteLearningCheck(check, existing) : check);
+  }
+
+  return Array.from(merged.values()).sort(
+    (first, second) => getLearningCheckTime(second) - getLearningCheckTime(first)
+  );
+}
+
+function mergeConceptMasteries(persistedMasteries: ConceptMastery[], cachedMasteries: ConceptMastery[]) {
+  const merged = new Map<string, ConceptMastery>();
+
+  for (const mastery of cachedMasteries) {
+    merged.set(getConceptMasteryKey(mastery.concept, mastery.materialId), mastery);
+  }
+
+  for (const mastery of persistedMasteries) {
+    const key = getConceptMasteryKey(mastery.concept, mastery.materialId);
+    const existing = merged.get(key);
+    merged.set(key, existing ? pickNewerConceptMastery(mastery, existing) : mastery);
+  }
+
+  return sortConceptMasteries(Array.from(merged.values()));
+}
+
+function pickMoreCompleteLearningCheck(first: LearningCheck, second: LearningCheck) {
+  const firstPriority = getLearningCheckStatusPriority(first);
+  const secondPriority = getLearningCheckStatusPriority(second);
+
+  if (firstPriority !== secondPriority) {
+    return firstPriority > secondPriority ? first : second;
+  }
+
+  return getLearningCheckTime(first) >= getLearningCheckTime(second) ? first : second;
+}
+
+function pickNewerConceptMastery(first: ConceptMastery, second: ConceptMastery) {
+  const firstTime = new Date(first.updatedAt).getTime();
+  const secondTime = new Date(second.updatedAt).getTime();
+
+  if (Number.isFinite(firstTime) && Number.isFinite(secondTime) && firstTime !== secondTime) {
+    return firstTime > secondTime ? first : second;
+  }
+
+  return first.attempts >= second.attempts ? first : second;
+}
+
+function getLearningCheckStatusPriority(check: LearningCheck) {
+  if (isScoredLearningCheck(check)) {
+    return 2;
+  }
+
+  return check.status === "checking" ? 1 : 0;
+}
+
+function getLearningCheckTime(check: LearningCheck) {
+  const time = new Date(check.answeredAt ?? check.createdAt).getTime();
+  return Number.isFinite(time) ? time : 0;
 }
 
 function formatReviewTime(value: string | null) {
@@ -2680,6 +2977,59 @@ function formatReviewTime(value: string | null) {
     hour: "numeric",
     minute: "2-digit"
   }).format(date);
+}
+
+function sortConceptMasteries(masteries: ConceptMastery[]) {
+  return [...masteries].sort((first, second) => {
+    const firstReview = first.nextReviewAt ? new Date(first.nextReviewAt).getTime() : Number.POSITIVE_INFINITY;
+    const secondReview = second.nextReviewAt ? new Date(second.nextReviewAt).getTime() : Number.POSITIVE_INFINITY;
+
+    if (firstReview !== secondReview) {
+      return firstReview - secondReview;
+    }
+
+    return new Date(second.updatedAt).getTime() - new Date(first.updatedAt).getTime();
+  });
+}
+
+function mergeConceptMastery(current: ConceptMastery[], next: ConceptMastery) {
+  const nextKey = getConceptMasteryKey(next.concept, next.materialId);
+  const merged = current.filter((item) => getConceptMasteryKey(item.concept, item.materialId) !== nextKey);
+
+  return sortConceptMasteries([next, ...merged]);
+}
+
+function updateConceptMasteriesFromCheck(
+  current: ConceptMastery[],
+  check: LearningCheck & { status: LearningCheckStatus },
+  sessionId: string | null
+) {
+  const key = getConceptMasteryKey(check.concept, check.materialId);
+  const previous = current.find((item) => getConceptMasteryKey(item.concept, item.materialId) === key) ?? null;
+  const now = new Date(check.answeredAt ?? check.createdAt);
+  const next = updateConceptMasteryForResult({
+    previous,
+    sessionId,
+    concept: check.concept,
+    materialId: check.materialId,
+    status: check.status,
+    now: Number.isNaN(now.getTime()) ? new Date() : now
+  });
+
+  return mergeConceptMastery(current, {
+    ...next,
+    nextReviewAt: check.nextReviewAt ?? next.nextReviewAt
+  });
+}
+
+function buildConceptMasteriesFromChecks(checks: LearningCheck[], sessionId: string | null) {
+  return checks
+    .filter(isScoredLearningCheck)
+    .sort((first, second) => new Date(first.createdAt).getTime() - new Date(second.createdAt).getTime())
+    .reduce<ConceptMastery[]>(
+      (current, check) => updateConceptMasteriesFromCheck(current, check, sessionId),
+      []
+    );
 }
 
 function SessionsScreen({
@@ -2936,12 +3286,14 @@ function MaterialsScreen({
 
 function ProgressScreen({
   checks,
+  masteries,
   activeCheck,
   hasMaterials,
   onOpenLearn,
   onPracticeConcept
 }: {
   checks: LearningCheck[];
+  masteries: ConceptMastery[];
   activeCheck: LearningCheck | null;
   hasMaterials: boolean;
   onOpenLearn: () => void;
@@ -2951,24 +3303,38 @@ function ProgressScreen({
   const gotItCount = scoredChecks.filter((check) => check.status === "got-it").length;
   const needsPracticeCount = scoredChecks.filter((check) => check.status === "needs-practice").length;
   const confusedCount = scoredChecks.filter((check) => check.status === "confused").length;
-  const scheduledReviewCount = scoredChecks.filter((check) => check.nextReviewAt).length;
+  const scheduledReviewCount = masteries.filter((mastery) => mastery.nextReviewAt).length;
   const accuracyPercent = scoredChecks.length > 0 ? Math.round((gotItCount / scoredChecks.length) * 100) : 0;
   const conceptMap = new Map<string, LearningCheck[]>();
 
   for (const check of scoredChecks) {
-    conceptMap.set(check.concept, [...(conceptMap.get(check.concept) ?? []), check]);
+    const key = getConceptMasteryKey(check.concept, check.materialId);
+    conceptMap.set(key, [...(conceptMap.get(key) ?? []), check]);
   }
 
-  const concepts = Array.from(conceptMap.entries()).map(([concept, conceptChecks]) => {
-    const latest = conceptChecks[0];
+  const masteryMap = new Map(masteries.map((mastery) => [getConceptMasteryKey(mastery.concept, mastery.materialId), mastery]));
+  const conceptKeys = Array.from(new Set([...masteryMap.keys(), ...conceptMap.keys()]));
+  const concepts = conceptKeys.map((key) => {
+    const mastery = masteryMap.get(key) ?? null;
+    const conceptChecks = conceptMap.get(key) ?? [];
+    const latest = conceptChecks[0] ?? null;
     const gotIt = conceptChecks.filter((check) => check.status === "got-it").length;
+    const attempts = mastery?.attempts ?? conceptChecks.length;
+    const correctCount = mastery?.correctCount ?? gotIt;
+    const accuracy = attempts > 0 ? Math.round((correctCount / attempts) * 100) : 0;
+    const masteryScore = mastery ? Math.round(mastery.masteryScore * 100) : accuracy;
 
     return {
-      concept,
+      key,
+      concept: mastery?.concept ?? latest?.concept ?? "Current concept",
       checks: conceptChecks,
       latest,
-      gotIt,
-      accuracy: Math.round((gotIt / conceptChecks.length) * 100)
+      attempts,
+      correctCount,
+      accuracy,
+      masteryScore,
+      status: mastery?.lastStatus ?? latest?.status ?? "needs-practice",
+      nextReviewAt: mastery?.nextReviewAt ?? latest?.nextReviewAt ?? null
     };
   });
 
@@ -3018,7 +3384,7 @@ function ProgressScreen({
         </div>
       </div>
 
-      {checks.length === 0 ? (
+      {checks.length === 0 && masteries.length === 0 ? (
         <div className="sessions-empty">
           <h3>No progress checks yet</h3>
           <p>
@@ -3044,21 +3410,24 @@ function ProgressScreen({
           {concepts.length > 0 ? (
             <div className="progress-concept-grid">
               {concepts.map((item) => (
-                <article className={`progress-concept-card ${item.latest.status}`} key={item.concept}>
+                <article className={`progress-concept-card ${item.status}`} key={item.key}>
                   <div className="progress-concept-header">
                     <div>
                       <h3>{item.concept}</h3>
-                      <p>{item.checks.length} check{item.checks.length === 1 ? "" : "s"} answered</p>
+                      <p>{item.attempts} attempt{item.attempts === 1 ? "" : "s"} tracked</p>
                     </div>
-                    <span className={`progress-status-pill ${item.latest.status}`}>
-                      {getLearningCheckStatusLabel(item.latest.status)}
+                    <span className={`progress-status-pill ${item.status}`}>
+                      {getLearningCheckStatusLabel(item.status)}
                     </span>
                   </div>
-                  <p className="progress-question">{item.latest.question}</p>
-                  <p className="progress-feedback">{item.latest.feedback || "No feedback yet."}</p>
+                  <p className="progress-question">
+                    {item.latest?.question ?? "Concept mastery was restored from saved progress."}
+                  </p>
+                  <p className="progress-feedback">{item.latest?.feedback || "No feedback yet."}</p>
                   <div className="progress-concept-footer">
-                    <span>{item.accuracy}% got it</span>
-                    <span>Review {formatReviewTime(item.latest.nextReviewAt)}</span>
+                    <span>{item.masteryScore}% mastery</span>
+                    <span>{item.accuracy}% accuracy</span>
+                    <span>Review {formatReviewTime(item.nextReviewAt)}</span>
                   </div>
                   {hasMaterials && (
                     <button

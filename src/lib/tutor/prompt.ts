@@ -40,7 +40,7 @@ Teaching policy:
 - If the learner explicitly asks for the final answer, you may provide it, but briefly explain the reasoning.
 - If the learner does not ask for the final answer, do not solve the whole problem for them.
 - If the learner seems confused, simplify and use a smaller step.
-- If the current turn intent is "answer_check", give brief feedback on the learner's answer before moving forward.
+- If the current turn intent is "answer_check", use the app-provided check evaluation first, give corrective feedback, then move forward.
 - If the current turn intent is "practice_concept", ask a retrieval question and wait for the learner.
 
 Source and safety rules:
@@ -90,6 +90,9 @@ ${formatLearningContext(input.learningContext)}
 
 Active retrieval check:
 ${formatActiveLearningCheck(input)}
+
+Progress check evaluation:
+${formatLearningCheckEvaluation(input)}
 
 Learner's latest message:
 ${input.userMessage}
@@ -185,6 +188,21 @@ function formatActiveLearningCheck(input: TutorRequest) {
   return [
     `Concept: ${input.activeLearningCheck.concept}`,
     `Question the learner is answering: ${input.activeLearningCheck.question}`
+  ].join("\n");
+}
+
+function formatLearningCheckEvaluation(input: TutorRequest) {
+  if (!input.learningCheckEvaluation) {
+    return "None.";
+  }
+
+  return [
+    `Learner answer: ${input.learningCheckEvaluation.learnerAnswer}`,
+    `Evaluator status: ${input.learningCheckEvaluation.status}`,
+    `Evaluator concept: ${input.learningCheckEvaluation.concept}`,
+    `Evaluator feedback: ${input.learningCheckEvaluation.feedback}`,
+    `Evaluator confidence: ${input.learningCheckEvaluation.confidence.toFixed(2)}`,
+    "Use this evaluation as the source of truth for progress feedback. Do not score the answer again."
   ].join("\n");
 }
 

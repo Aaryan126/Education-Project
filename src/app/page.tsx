@@ -31,6 +31,7 @@ import { CameraCapture, type CapturedInput } from "@/components/CameraCapture";
 import { ConversationPanel } from "@/components/ConversationPanel";
 import type { SpeechTraceState } from "@/components/ConversationPanel";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
+import { renderPdfPageImages } from "@/lib/documents/renderPdfPages";
 import {
   buildSpeechTraceWordEndTimesMs,
   getSpeechTraceWordIndex,
@@ -42,12 +43,20 @@ import {
 } from "@/lib/speech/trace";
 import type {
   ConversationMessage,
+  LearnerProfile,
   LearningCheckEvaluation,
   LearningCheckStatus,
   LearningContext,
+  SessionMemory,
   TutorResponse,
   UnderstandingLevel
 } from "@/lib/tutor/types";
+import {
+  createEmptySessionMemory,
+  createLearnerProfile,
+  normalizeLearnerProfile,
+  normalizeSessionMemory
+} from "@/lib/tutor/memory";
 
 // Re-exported for use by StepIndicator
 export type SessionPhase = "capture" | "review" | "learn";
@@ -78,6 +87,8 @@ type SaveSessionRequest = {
   title: string;
   targetLanguage: string;
   sourceLanguage: string;
+  sessionMemory?: SessionMemory;
+  learnerProfile?: LearnerProfile;
   materials: Array<{
     id: string;
     name: string;
@@ -142,6 +153,8 @@ type LoadedSessionResponse = {
     createdAt: string;
   }>;
   messages: ConversationMessage[];
+  sessionMemory?: SessionMemory;
+  learnerProfile?: LearnerProfile;
   learningChecks?: LearningCheck[];
 };
 
@@ -240,6 +253,10 @@ function makeMessage(role: ConversationMessage["role"], content: string): Conver
     role,
     content
   };
+}
+
+function isPdfMaterial(material: Pick<CapturedInput, "mimeType" | "name">) {
+  return material.mimeType === "application/pdf" || /\.pdf$/i.test(material.name);
 }
 
 async function readJsonResponse<T>(response: Response): Promise<T> {
@@ -433,6 +450,7 @@ export default function Home() {
   const [materials, setMaterials] = useState<CapturedMaterial[]>([]);
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [sessionMemory, setSessionMemory] = useState<SessionMemory>(() => createEmptySessionMemory());
   const [learningChecks, setLearningChecks] = useState<LearningCheck[]>([]);
   const learningChecksRef = useRef<LearningCheck[]>([]);
   const [activeLearningCheckId, setActiveLearningCheckId] = useState<string | null>(null);
@@ -464,6 +482,13 @@ export default function Home() {
   const [ttsSpeechRate, setTtsSpeechRate] = useState(DEFAULT_TTS_SPEECH_RATE);
   const [understandingLevel, setUnderstandingLevel] = useState<UnderstandingLevel>("medium");
   const [allowDirectAnswer, setAllowDirectAnswer] = useState(false);
+  const [learnerProfile, setLearnerProfile] = useState<LearnerProfile>(() =>
+    createLearnerProfile({
+      targetLanguage: "en",
+      sourceLanguage: "auto",
+      understandingLevel: "medium"
+    })
+  );
 
   // --- UI state ---
   const [busy, setBusy] = useState(false);
@@ -500,6 +525,23 @@ export default function Home() {
     [materials, selectedMaterialId]
   );
   const learningContext = selectedMaterial?.learningContext ?? null;
+  const effectiveLearnerProfile = useMemo(
+    () => ({
+      ...normalizeLearnerProfile(
+        learnerProfile,
+        createLearnerProfile({
+          targetLanguage,
+          sourceLanguage,
+          understandingLevel
+        })
+      ),
+      preferredLanguage: targetLanguage,
+      sourceLanguage,
+      readingLevel:
+        understandingLevel === "low" ? "beginner" : understandingLevel === "high" ? "advanced" : "intermediate"
+    }),
+    [learnerProfile, sourceLanguage, targetLanguage, understandingLevel]
+  );
   const activeLearningCheck = useMemo(
     () =>
       learningChecks.find(
@@ -725,6 +767,17 @@ export default function Home() {
       setMaterials(loadedMaterials);
       setSelectedMaterialId(loadedMaterials[0]?.id ?? null);
       setMessages(data.messages);
+      setSessionMemory(normalizeSessionMemory(data.sessionMemory));
+      setLearnerProfile(
+        normalizeLearnerProfile(
+          data.learnerProfile,
+          createLearnerProfile({
+            targetLanguage: data.session.targetLanguage || "en",
+            sourceLanguage: data.session.sourceLanguage || "auto",
+            understandingLevel
+          })
+        )
+      );
       setLearningChecks(data.learningChecks ?? []);
       setActiveLearningCheckId((data.learningChecks ?? []).find(isActiveLearningCheck)?.id ?? null);
       setQuestion("");
@@ -760,12 +813,26 @@ export default function Home() {
 
       for (const material of queuedMaterials) {
         setStatus(`Processing ${material.name}...`);
+        let pdfPageImageDataUrls: string[] = [];
+
+        if (isPdfMaterial(material)) {
+          try {
+            setStatus(`Rendering PDF pages from ${material.name}...`);
+            pdfPageImageDataUrls = await renderPdfPageImages(material.dataUrl);
+          } catch {
+            pdfPageImageDataUrls = [];
+          }
+
+          setStatus(`Processing ${material.name}...`);
+        }
+
         const data = await fetch("/api/vision/extract", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             materialDataUrl: material.dataUrl,
             imageDataUrl: material.mimeType.startsWith("image/") ? material.dataUrl : undefined,
+            pdfPageImageDataUrls: pdfPageImageDataUrls.length > 0 ? pdfPageImageDataUrls : undefined,
             mimeType: material.mimeType,
             fileName: material.name,
             targetLanguage
@@ -784,6 +851,12 @@ export default function Home() {
 
       let savedSessionId: string | null = null;
       const queuedById = new Map(queuedMaterials.map((material) => [material.id, material]));
+      const nextSessionMemory = createEmptySessionMemory();
+      const nextLearnerProfile = createLearnerProfile({
+        targetLanguage,
+        sourceLanguage,
+        understandingLevel
+      });
 
       try {
         setStatus("Saving session...");
@@ -791,6 +864,8 @@ export default function Home() {
           title: processedMaterials[0]?.learningContext.topic || "Learning session",
           targetLanguage,
           sourceLanguage,
+          sessionMemory: nextSessionMemory,
+          learnerProfile: nextLearnerProfile,
           materials: processedMaterials.map((material) => ({
             id: material.id,
             name: material.name,
@@ -810,6 +885,8 @@ export default function Home() {
       setSessionId(savedSessionId);
       setMaterials((current) => [...current, ...processedMaterials]);
       setSelectedMaterialId(processedMaterials[0]?.id ?? null);
+      setSessionMemory(nextSessionMemory);
+      setLearnerProfile(nextLearnerProfile);
       setLearningChecks([]);
       setActiveLearningCheckId(null);
       setMessages((current) => [
@@ -837,6 +914,12 @@ export default function Home() {
 
   // ---- Sample mode ----
   function handleUseSample() {
+    const nextSessionMemory = createEmptySessionMemory();
+    const nextLearnerProfile = createLearnerProfile({
+      targetLanguage,
+      sourceLanguage,
+      understandingLevel
+    });
     const nextMaterial: CapturedMaterial = {
       id: crypto.randomUUID(),
       name: "Sample photosynthesis material",
@@ -850,6 +933,8 @@ export default function Home() {
     setSessionId(null);
     setMaterials((current) => [...current, nextMaterial]);
     setSelectedMaterialId(nextMaterial.id);
+    setSessionMemory(nextSessionMemory);
+    setLearnerProfile(nextLearnerProfile);
     setLearningChecks([]);
     setActiveLearningCheckId(null);
     setMessages((current) => [...current, makeMessage("system", "Sample photosynthesis material loaded.")]);
@@ -865,6 +950,8 @@ export default function Home() {
       title: nextMaterial.learningContext.topic,
       targetLanguage,
       sourceLanguage,
+      sessionMemory: nextSessionMemory,
+      learnerProfile: nextLearnerProfile,
       materials: [
         {
           id: nextMaterial.id,
@@ -893,6 +980,14 @@ export default function Home() {
     setTutorStopped(false);
     setMaterials([]);
     setSelectedMaterialId(null);
+    setSessionMemory(createEmptySessionMemory());
+    setLearnerProfile(
+      createLearnerProfile({
+        targetLanguage,
+        sourceLanguage,
+        understandingLevel
+      })
+    );
     setLearningChecks([]);
     setActiveLearningCheckId(null);
     setMessages([]);
@@ -1075,7 +1170,17 @@ export default function Home() {
           targetLanguage,
           sourceLanguage,
           understandingLevel,
-          allowDirectAnswer
+          allowDirectAnswer,
+          sessionId: activeSessionId,
+          materialId: selectedMaterial?.id ?? null,
+          sessionMemory,
+          learnerProfile: effectiveLearnerProfile,
+          activeLearningCheck: checkToEvaluate
+            ? {
+                question: checkToEvaluate.question,
+                concept: checkToEvaluate.concept
+              }
+            : null
         })
       }).then((response) => readJsonResponse<TutorResponse>(response));
 
@@ -1091,6 +1196,9 @@ export default function Home() {
 
       const assistantMessage = makeMessage("assistant", assistantText);
       setUnderstandingLevel(tutorResponse.understandingLevel);
+      if (tutorResponse.sessionMemory) {
+        setSessionMemory(normalizeSessionMemory(tutorResponse.sessionMemory));
+      }
       setStatus("Preparing voice...");
 
       let assistantRevealed = false;

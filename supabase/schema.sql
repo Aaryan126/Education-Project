@@ -51,6 +51,14 @@ create table if not exists public.learning_checks (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.session_memories (
+  session_id uuid primary key references public.sessions(id) on delete cascade,
+  owner_key text not null default 'main',
+  learning_memory jsonb not null default '{}'::jsonb,
+  learner_profile jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.tts_usage_months (
   owner_key text not null default 'main',
   usage_month text not null,
@@ -66,6 +74,7 @@ create index if not exists materials_owner_session_idx on public.materials(owner
 create index if not exists messages_owner_session_created_idx on public.messages(owner_key, session_id, created_at);
 create index if not exists learning_checks_owner_session_created_idx on public.learning_checks(owner_key, session_id, created_at desc);
 create index if not exists learning_checks_owner_next_review_idx on public.learning_checks(owner_key, next_review_at);
+create index if not exists session_memories_owner_idx on public.session_memories(owner_key, updated_at desc);
 
 drop function if exists public.increment_tts_usage_month(text, text, text, integer);
 

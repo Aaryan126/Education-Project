@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import mammoth from "mammoth";
 
 export type ParsedMaterialData = {
@@ -7,7 +7,6 @@ export type ParsedMaterialData = {
   buffer: Buffer;
 };
 
-const requireFromHere = createRequire(import.meta.url);
 let pdfWorkerConfigured = false;
 let pdfWorkerDataUrl: string | null = null;
 
@@ -28,7 +27,7 @@ async function extractPdfText(buffer: Buffer) {
   const { PDFParse } = await import("pdf-parse");
 
   if (!pdfWorkerConfigured) {
-    const workerPath = requireFromHere.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+    const workerPath = resolvePdfWorkerPath();
     pdfWorkerDataUrl ??= `data:text/javascript;base64,${readFileSync(workerPath).toString("base64")}`;
     PDFParse.setWorker(pdfWorkerDataUrl);
     pdfWorkerConfigured = true;
@@ -41,6 +40,20 @@ async function extractPdfText(buffer: Buffer) {
   } finally {
     await parser.destroy();
   }
+}
+
+function resolvePdfWorkerPath() {
+  const candidates = [
+    join(process.cwd(), "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"),
+    join(process.cwd(), "node_modules/pdf-parse/dist/worker/pdf.worker.mjs")
+  ];
+  const workerPath = candidates.find((candidate) => existsSync(candidate));
+
+  if (!workerPath) {
+    throw new Error("PDF worker file was not found. Run npm install and restart the dev server.");
+  }
+
+  return workerPath;
 }
 
 export async function extractTextFromMaterial(dataUrl: string, mimeType: string, fileName: string) {

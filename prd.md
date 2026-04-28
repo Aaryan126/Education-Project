@@ -41,7 +41,7 @@ An AI-powered web application that:
 2. **Extracts structured learning context** (topic, text, summary, diagrams) from images and documents
 3. **Engages in Socratic conversation** -- guiding with hints, not giving answers
 4. **Speaks responses aloud** in the learner's preferred language
-5. **Adapts difficulty dynamically** based on conversation signals
+5. **Adapts difficulty dynamically** based on conversation signals and session memory
 6. **Persists sessions server-side** so learners can return to previous conversations
 7. **Tracks learning progress from retrieval practice** using actual learner answers
 8. **Tracks usage and cost** across TTS providers
@@ -68,6 +68,7 @@ Students who understand spoken language but struggle with reading:
 ```
 Open app -> Capture/upload material(s) -> Vision extracts context
   -> Review extracted topic & summary -> Ask question (voice or text)
+  -> Intent router + session memory + extracted learning context
   -> Tutor responds with Socratic guidance + follow-up
   -> Response spoken aloud (with word-by-word highlight)
   -> Learner answers follow-up retrieval check
@@ -237,12 +238,13 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 
 ### 5.9 Session Persistence & History (Supabase)
 
-**Database schema (5 tables):**
+**Database schema (6 tables):**
 
 | Table | Purpose |
 |---|---|
 | `sessions` | Learning session metadata (title, languages, status, timestamps) |
 | `materials` | Uploaded files (name, MIME type, storage path, learning_context JSONB) |
+| `session_memories` | Rolling session memory and lightweight single-user learner profile |
 | `messages` | Conversation history (role, content, client-side ID for optimistic UI) |
 | `learning_checks` | Retrieval-practice answers, concept status, feedback, and spaced review timestamps |
 | `tts_usage_months` | Monthly TTS character/request tracking per provider |
@@ -253,7 +255,7 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 - Learning checks saved when created, scored, or skipped
 - Session list view with material/message counts, last-updated sorting
 - Materials library grid with preview thumbnails, download links, session linkage
-- Full session reload (restores materials, messages, language settings, and progress checks)
+- Full session reload (restores materials, messages, language settings, session memory, learner profile, and progress checks)
 - Delete session (cascades to materials, messages, and learning checks)
 - Delete individual material (removes storage file + DB row)
 - Graceful degradation when Supabase is not configured (in-memory only)
@@ -429,6 +431,7 @@ Both providers share:
 
 - [x] Image OCR and understanding via GPT-4o vision
 - [x] PDF text extraction via pdfjs-dist
+- [x] PDF page rendering for vision OCR on embedded images and scanned page text
 - [x] DOCX text extraction via mammoth
 - [x] Structured LearningContext output (7 fields)
 - [x] Confidence scoring
@@ -438,6 +441,9 @@ Both providers share:
 ### 7.3 Conversation Engine
 
 - [x] Maintain full conversation history (last 8 messages sent to LLM)
+- [x] Maintain rolling session memory for current goal, misconceptions, strengths, open questions, and strategy
+- [x] Route tutor turns by intent before prompt construction
+- [x] Keep uploaded source material out of the system prompt and mark it as untrusted context
 - [x] Generate Socratic-guided responses
 - [x] Ask one adaptive follow-up per response
 - [x] Dynamic understanding level adjustment (low/medium/high)
@@ -466,6 +472,7 @@ Both providers share:
 - [x] Auto-save to Supabase on session start
 - [x] Save messages after each exchange
 - [x] Save retrieval progress checks for persisted sessions
+- [x] Save session memory and learner profile for persisted sessions
 - [x] List past sessions with summary info
 - [x] Load full session (materials + messages + settings + progress checks)
 - [x] Delete sessions (cascade delete materials/messages/progress checks)

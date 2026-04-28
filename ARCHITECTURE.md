@@ -6,7 +6,7 @@ The main client experience lives in `src/app/page.tsx`. It owns session state, m
 
 `src/components/CameraCapture.tsx` handles material input. `src/components/ConversationPanel.tsx` renders messages, auto-scrolls the transcript, highlights the active phrase during speech playback, and provides per-message copy/edit controls. `src/components/VoiceRecorder.tsx` manages hands-free microphone capture.
 
-Learning progress state is also owned by `src/app/page.tsx`. A pending retrieval check is created only after the assistant message has been revealed and speech playback has completed. The next learner reply is evaluated, tagged to a concept, and surfaced in the Progress screen.
+Learning progress and session memory state are also owned by `src/app/page.tsx`. A pending retrieval check is created only after the assistant message has been revealed and speech playback has completed. The next learner reply is evaluated, tagged to a concept, and surfaced in the Progress screen. A rolling session memory is returned by `/api/tutor/respond` and persisted for saved sessions.
 
 ## Server Routes
 
@@ -20,6 +20,22 @@ Learning progress state is also owned by `src/app/page.tsx`. A pending retrieval
 - `/api/sessions`, `/api/materials`, `/api/usage/tts`: Supabase-backed persistence and usage tracking.
 - `/api/progress/checks`: upserts and deletes saved learning checks for persisted sessions.
 - `PATCH /api/sessions/messages`: updates edited message text for saved sessions.
+
+## Material Extraction
+
+Material processing starts in `src/app/page.tsx`. Images are sent to `/api/vision/extract` as image data URLs and analyzed by the OpenAI vision model. PDFs keep the existing text-layer path through `src/lib/documents/extractText.ts`, and the client also renders up to four PDF pages to JPEGs with `src/lib/documents/renderPdfPages.ts`. `/api/vision/extract` sends the extracted text plus rendered page images to the same OpenAI vision/text context extractor, so scanned pages, embedded screenshots, and diagram labels can be read when they are visible in the rendered pages. If browser-side page rendering fails, PDF processing falls back to text-only extraction.
+
+## Tutor Pipeline
+
+`/api/tutor/respond` builds a layered tutor request:
+
+1. Validate the browser payload with the selected material, recent messages, settings, active check, and current session memory.
+2. Classify the latest learner turn with `src/lib/tutor/intent.ts` as a normal question, check answer, summary request, direct-answer request, practice request, translation/read-aloud request, or off-topic turn.
+3. Build prompts with `src/lib/tutor/prompt.ts`. The system prompt contains tutor behavior and safety rules only. Uploaded material is passed as explicitly untrusted context in the user prompt.
+4. Call the configured provider from `src/lib/llm`. Anthropic uses a strict tool schema; Z.ai uses JSON mode.
+5. Return structured tutor output, including response, follow-up question, target concept, tutor move, memory update candidates, and the updated session memory.
+
+The tutor remains model-stateless. Durable continuity comes from app-owned memory, saved messages, and saved progress checks.
 
 ## Hands-Free Voice Flow
 
@@ -47,7 +63,7 @@ The retrieval-practice banner is deliberately gated on speech completion. MP3 pl
 
 The progress loop uses actual learner answers:
 
-1. `/api/tutor/respond` returns a tutor response and one focused follow-up question.
+1. `/api/tutor/respond` returns a tutor response, target concept, tutor move, updated session memory, and one focused follow-up question.
 2. The client reveals the assistant text and speaks it.
 3. After TTS completion, the follow-up question becomes the active progress check.
 4. The learner answers by voice or text.
@@ -58,6 +74,6 @@ Saved checks are loaded alongside a session and rendered in the Progress screen 
 
 ## Persistence
 
-Supabase stores sessions, materials, messages, learning checks, and TTS usage. The schema is in `supabase/schema.sql`. Runtime access uses the server-side Supabase service key only; never expose it in client code or committed files.
+Supabase stores sessions, materials, session memories, messages, learning checks, and TTS usage. The schema is in `supabase/schema.sql`. Runtime access uses the server-side Supabase service key only; never expose it in client code or committed files.
 
-`supabase/schema.sql` is written to be rerunnable in the Supabase SQL Editor. It drops and recreates only the `increment_tts_usage_month(text,text,text,integer)` RPC function before defining it, because PostgreSQL cannot change an existing function return type in place.
+`supabase/schema.sql` is written to be rerunnable in the Supabase SQL Editor. It drops and recreates RPC functions before defining them, because PostgreSQL cannot change an existing function return type in place.

@@ -24,6 +24,7 @@ const acceptedUploadTypes = [
   ".pdf",
   ".docx"
 ].join(",");
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
 function getDataUrlSize(dataUrl: string) {
   const base64 = dataUrl.split(",")[1] ?? "";
@@ -150,9 +151,15 @@ export function CameraCapture({ busy, onMaterialReady }: CameraCaptureProps) {
     }
 
     const acceptedFiles = files.filter((file) => isAcceptedFile(file, file.name));
+    const oversizedFiles = acceptedFiles.filter((file) => file.size > MAX_UPLOAD_BYTES);
 
     if (acceptedFiles.length === 0) {
       setCameraError("Please choose an image, PDF, or Word .docx file.");
+      return;
+    }
+
+    if (oversizedFiles.length > 0) {
+      setCameraError("Please choose files under 15 MB for this demo.");
       return;
     }
 
@@ -172,6 +179,11 @@ export function CameraCapture({ busy, onMaterialReady }: CameraCaptureProps) {
 
     if (!isAcceptedFile(file, file.name)) {
       setCameraError("Please choose an image, PDF, or Word .docx file.");
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setCameraError("Please choose a file under 15 MB for this demo.");
       return;
     }
 

@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import { getEnv, requireTutorProviderKeys } from "@/lib/env";
 import { normalizeConfidence } from "@/lib/modelOutput";
-import { buildTutorSystemPrompt, buildTutorUserPrompt, parseTutorJson } from "@/lib/tutor/prompt";
+import { buildTutorSystemPrompt, buildTutorUserPrompt, normalizeTutorMove, parseTutorJson } from "@/lib/tutor/prompt";
 import type { TutorRequest, TutorResponse } from "@/lib/tutor/types";
 import type { LLMProvider } from "./types";
 
@@ -22,6 +22,14 @@ const tutorResponseTool: Tool = {
         type: "string",
         description: "Exactly one concise question for the learner."
       },
+      targetConcept: {
+        type: "string",
+        description: "A short concept label for the current tutoring focus."
+      },
+      tutorMove: {
+        type: "string",
+        enum: ["hint", "explain", "feedback", "quiz", "summary", "direct_answer", "clarify"]
+      },
       understandingLevel: {
         type: "string",
         enum: ["low", "medium", "high"]
@@ -31,9 +39,31 @@ const tutorResponseTool: Tool = {
       },
       confidence: {
         type: "number"
+      },
+      usedSourceChunkIds: {
+        type: "array",
+        items: {
+          type: "string"
+        }
+      },
+      memoryUpdateCandidates: {
+        type: "array",
+        items: {
+          type: "string"
+        }
       }
     },
-    required: ["response", "followUpQuestion", "understandingLevel", "directAnswerGiven", "confidence"]
+    required: [
+      "response",
+      "followUpQuestion",
+      "targetConcept",
+      "tutorMove",
+      "understandingLevel",
+      "directAnswerGiven",
+      "confidence",
+      "usedSourceChunkIds",
+      "memoryUpdateCandidates"
+    ]
   }
 };
 
@@ -77,9 +107,18 @@ export class AnthropicTutorProvider implements LLMProvider {
       return {
         response: String(parsed.response ?? ""),
         followUpQuestion: String(parsed.followUpQuestion ?? ""),
+        targetConcept: String(parsed.targetConcept ?? input.learningContext?.topic ?? ""),
+        tutorMove: normalizeTutorMove(parsed.tutorMove),
         understandingLevel: parsed.understandingLevel === "low" || parsed.understandingLevel === "high" ? parsed.understandingLevel : "medium",
         directAnswerGiven: Boolean(parsed.directAnswerGiven),
         confidence: normalizeConfidence(parsed.confidence),
+        usedSourceChunkIds: Array.isArray(parsed.usedSourceChunkIds)
+          ? parsed.usedSourceChunkIds.map((item) => String(item)).filter(Boolean)
+          : [],
+        memoryUpdateCandidates: Array.isArray(parsed.memoryUpdateCandidates)
+          ? parsed.memoryUpdateCandidates.map((item) => String(item)).filter(Boolean)
+          : [],
+        turnIntent: input.turnIntent || "ask_question",
         provider: this.name
       };
     }
@@ -94,9 +133,18 @@ export class AnthropicTutorProvider implements LLMProvider {
     return {
       response: String(parsed.response ?? ""),
       followUpQuestion: String(parsed.followUpQuestion ?? ""),
+      targetConcept: String(parsed.targetConcept ?? input.learningContext?.topic ?? ""),
+      tutorMove: normalizeTutorMove(parsed.tutorMove),
       understandingLevel: parsed.understandingLevel === "low" || parsed.understandingLevel === "high" ? parsed.understandingLevel : "medium",
       directAnswerGiven: Boolean(parsed.directAnswerGiven),
       confidence: normalizeConfidence(parsed.confidence),
+      usedSourceChunkIds: Array.isArray(parsed.usedSourceChunkIds)
+        ? parsed.usedSourceChunkIds.map((item) => String(item)).filter(Boolean)
+        : [],
+      memoryUpdateCandidates: Array.isArray(parsed.memoryUpdateCandidates)
+        ? parsed.memoryUpdateCandidates.map((item) => String(item)).filter(Boolean)
+        : [],
+      turnIntent: input.turnIntent || "ask_question",
       provider: this.name
     };
   }

@@ -6,11 +6,12 @@ Phloem is a Next.js learning companion that turns a captured image, PDF, or Word
 
 1. Capture material from camera, upload, paste, or link.
 2. Extract text and learning context with OpenAI vision/text models.
-3. Generate a structured tutor response with Anthropic or Z.ai.
-4. Speak the response with browser TTS, OpenAI TTS, or Google Cloud TTS.
-5. After speech playback completes, ask one retrieval-practice progress check.
-6. Score the learner's answer as `got-it`, `needs-practice`, or `confused`, then save the concept progress in Supabase.
-7. In hands-free mode, browser Silero VAD segments speech and `/api/speech/turn` uses Smart Turn when available before transcription.
+3. Route each learner turn by intent, such as answer check, summary, direct-answer request, or practice.
+4. Generate a structured tutor response with Anthropic or Z.ai using layered context: recent turns, session memory, a lightweight single-user learner profile, and the extracted learning context.
+5. Speak the response with browser TTS, OpenAI TTS, or Google Cloud TTS.
+6. After speech playback completes, ask one retrieval-practice progress check.
+7. Score the learner's answer as `got-it`, `needs-practice`, or `confused`, then save the concept progress in Supabase.
+8. In hands-free mode, browser Silero VAD segments speech and `/api/speech/turn` uses Smart Turn when available before transcription.
 
 ## Setup
 
@@ -30,7 +31,7 @@ If you want real local Smart Turn, place `smart-turn-v3.2-cpu.onnx` at `models/s
 
 Copy `.env.example` to `.env` and fill the provider keys you use. Keep Supabase service role keys in `.env` only.
 
-If you use Supabase persistence, run `supabase/schema.sql` in the Supabase SQL Editor. The schema creates sessions, materials, messages, learning checks, and TTS usage tables. It is intended to be rerunnable; the TTS usage RPC is dropped and recreated without deleting usage rows.
+If you use Supabase persistence, run `supabase/schema.sql` in the Supabase SQL Editor. The schema creates sessions, materials, messages, learning checks, session memories, and TTS usage tables. It is intended to be rerunnable; RPC functions are dropped and recreated without deleting usage rows.
 
 ## Development
 
@@ -48,6 +49,21 @@ The VAD assets are copied into `public/vad` by `postinstall`; they are generated
 Phloem now tracks learning progress from retrieval practice instead of only model-estimated understanding. Each tutor answer ends with a small check question after TTS playback finishes. The learner answers by voice or text, `/api/tutor/evaluate` scores the answer, and `/api/progress/checks` saves the result to Supabase when a session is persisted.
 
 The Progress screen groups saved checks by concept and shows status, feedback, score, and next review time. If Supabase is not configured or the `learning_checks` table has not been migrated yet, checks still work in memory for the current session.
+
+## Material Extraction
+
+Images are sent directly to the OpenAI vision model, which reads visible text and diagram labels. PDFs use both extraction paths: selectable text is extracted server-side with `pdf-parse`, and the browser renders up to the first four PDF pages to JPEG images so OpenAI vision can read text embedded in page images or diagrams. If page rendering fails, PDFs fall back to text-only extraction. Word documents use `mammoth` raw text extraction.
+
+## Tutor Memory
+
+The tutor uses layered context rather than a long transcript dump:
+
+- last 8 conversation messages for immediate turn memory
+- rolling session memory with current goal, strengths, misconceptions, open questions, and effective strategy
+- a lightweight single-user learner profile derived from app settings and current understanding level
+- extracted learning context from the selected material
+
+Uploaded source text is treated as untrusted context. The system prompt carries tutor behavior and safety rules; material text is passed separately so worksheet text cannot override tutor instructions.
 
 ## Conversation Controls
 

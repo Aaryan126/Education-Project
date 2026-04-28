@@ -6,6 +6,8 @@ import {
   getSupabaseOwnerKey,
   getSupabaseStorageBucket
 } from "@/lib/supabase/server";
+import { createLearnerProfile, normalizeLearnerProfile, normalizeSessionMemory } from "@/lib/tutor/memory";
+import { saveStoredSessionMemory } from "@/lib/tutor/sessionMemoryStore";
 
 export const runtime = "nodejs";
 
@@ -31,7 +33,9 @@ const requestSchema = z.object({
   title: z.string().min(1).default("Learning session"),
   targetLanguage: z.string().default("en"),
   sourceLanguage: z.string().default("auto"),
-  materials: z.array(materialSchema).min(1)
+  materials: z.array(materialSchema).min(1),
+  sessionMemory: z.unknown().optional(),
+  learnerProfile: z.unknown().optional()
 });
 
 type CountableRow = {
@@ -180,6 +184,18 @@ export async function POST(request: Request) {
     if (materialsError) {
       throw new Error(materialsError.message);
     }
+
+    const fallbackProfile = createLearnerProfile({
+      targetLanguage: body.targetLanguage,
+      sourceLanguage: body.sourceLanguage,
+      understandingLevel: "medium"
+    });
+
+    await saveStoredSessionMemory({
+      sessionId: session.id,
+      sessionMemory: normalizeSessionMemory(body.sessionMemory),
+      learnerProfile: normalizeLearnerProfile(body.learnerProfile, fallbackProfile)
+    }).catch(() => undefined);
 
     return jsonOk({ persisted: true, sessionId: session.id });
   } catch (error) {

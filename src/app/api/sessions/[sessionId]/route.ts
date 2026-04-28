@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getErrorMessage, jsonError, jsonOk } from "@/lib/api";
 import { getSupabaseAdmin, getSupabaseOwnerKey } from "@/lib/supabase/server";
+import { loadStoredSessionMemory } from "@/lib/tutor/sessionMemoryStore";
 
 export const runtime = "nodejs";
 
@@ -148,6 +149,11 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
         };
       })
     );
+    const storedMemory = await loadStoredSessionMemory({
+      sessionId,
+      targetLanguage: session.target_language,
+      sourceLanguage: session.source_language
+    }).catch(() => null);
 
     return jsonOk({
       session: {
@@ -181,7 +187,9 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
             createdAt: check.created_at,
             answeredAt: check.answered_at,
             nextReviewAt: check.next_review_at
-          }))
+          })),
+      sessionMemory: storedMemory?.sessionMemory,
+      learnerProfile: storedMemory?.learnerProfile
     });
   } catch (error) {
     return jsonError("Unable to load session.", 500, getErrorMessage(error));

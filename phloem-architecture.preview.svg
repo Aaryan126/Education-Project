@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -25 3120 1755" width="3120" height="1755">
+<defs><marker id="arrow-c2410c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#c2410c"/></marker><marker id="arrow-1e3a5f" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#1e3a5f"/></marker><marker id="arrow-b45309" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#b45309"/></marker><marker id="arrow-6d28d9" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#6d28d9"/></marker><marker id="arrow-dc2626" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#dc2626"/></marker><marker id="arrow-047857" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#047857"/></marker><marker id="arrow-1e40af" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#1e40af"/></marker></defs><rect x="-50" y="-25" width="3120" height="1755" fill="#ffffff"/>
+<text y="69" font-family="Menlo,Consolas,monospace" font-size="34" fill="#1e40af" text-anchor="start"><tspan x="60" dy="0">Phloem Architecture</tspan></text>
+<text y="96" font-family="Menlo,Consolas,monospace" font-size="14" fill="#64748b" text-anchor="start"><tspan x="60" dy="0">A voice-first, multimodal learning companion. Material context and learner turns converge into a Socratic tutor loop.</tspan><tspan x="60" dy="17.5">Speech completion then unlocks retrieval-practice progress.</tspan></text>
+<polyline points="105,175 2405,175" fill="none" stroke="#1e3a5f" stroke-width="3"/>
+<ellipse cx="107" cy="175" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="214" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="115.5" dy="0">Capture</tspan></text>
+<text y="237" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="middle"><tspan x="115" dy="0">camera / upload / paste / link</tspan></text>
+<ellipse cx="477" cy="175" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="214" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="485.5" dy="0">Extract</tspan></text>
+<text y="237" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="middle"><tspan x="485" dy="0">LearningContext JSON</tspan></text>
+<ellipse cx="847" cy="175" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="214" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="855.5" dy="0">Tutor</tspan></text>
+<text y="237" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="middle"><tspan x="855" dy="0">intent + memory + source</tspan></text>
+<ellipse cx="1217" cy="175" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="214" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="1225.5" dy="0">Speak</tspan></text>
+<text y="237" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="middle"><tspan x="1225" dy="0">MP3 / PCM / browser TTS</tspan></text>
+<ellipse cx="1587" cy="175" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="214" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="1595.5" dy="0">Check</tspan></text>
+<text y="237" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="middle"><tspan x="1595" dy="0">got-it / needs-practice / confused</tspan></text>
+<ellipse cx="1957" cy="175" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="214" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="1965.5" dy="0">Persist</tspan></text>
+<text y="237" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="middle"><tspan x="1965" dy="0">Supabase + local cache</tspan></text>
+<ellipse cx="2327" cy="175" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="214" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="2335.5" dy="0">Resume</tspan></text>
+<text y="237" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="middle"><tspan x="2335" dy="0">sessions, materials, progress</tspan></text>
+<rect x="60" y="315" width="470" height="690" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="22" fill="#1e40af" text-anchor="start"><tspan x="78" dy="0">Browser App Shell</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="78" dy="0">src/app/page.tsx owns app state, materials,</tspan><tspan x="78" dy="15">conversation, playback, progress, settings.</tspan></text>
+<rect x="570" y="315" width="565" height="690" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="22" fill="#1e40af" text-anchor="start"><tspan x="588" dy="0">Material Extraction</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="588" dy="0">Images, PDFs, DOCX, pasted, or linked content</tspan><tspan x="588" dy="15">become one normalized LearningContext.</tspan></text>
+<rect x="1175" y="315" width="560" height="690" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="22" fill="#1e40af" text-anchor="start"><tspan x="1193" dy="0">Hands-Free Voice Input</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="1193" dy="0">Client VAD segments speech. Smart Turn checks</tspan><tspan x="1193" dy="15">completion. OpenAI transcribes complete turns.</tspan></text>
+<rect x="1775" y="315" width="610" height="690" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="22" fill="#1e40af" text-anchor="start"><tspan x="1793" dy="0">Tutor Engine</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="1793" dy="0">Layered request context converges into structured</tspan><tspan x="1793" dy="15">Socratic tutor output.</tspan></text>
+<rect x="2425" y="315" width="585" height="690" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="22" fill="#1e40af" text-anchor="start"><tspan x="2443" dy="0">Speech Output + Progress Loop</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="2443" dy="0">Tutor audio playback gates the retrieval-practice</tspan><tspan x="2443" dy="15">check and concept-mastery update.</tspan></text>
+<rect x="60" y="1060" width="1375" height="610" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="1098" font-family="Menlo,Consolas,monospace" font-size="22" fill="#1e40af" text-anchor="start"><tspan x="78" dy="0">Persistence + Recovery</tspan></text>
+<text y="1120" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="78" dy="0">Server-owned Supabase access stores durable learning state.</tspan><tspan x="78" dy="15">Browser cache covers fast reloads.</tspan></text>
+<rect x="1480" y="1060" width="1530" height="610" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="1098" font-family="Menlo,Consolas,monospace" font-size="22" fill="#1e40af" text-anchor="start"><tspan x="1498" dy="0">External Services + Runtime Config</tspan></text>
+<text y="1120" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="1498" dy="0">Provider decisions come from env.ts.</tspan><tspan x="1498" dy="15">The app defines fallbacks where possible.</tspan></text>
+<rect x="95" y="405" width="190" height="92" fill="#fed7aa" stroke="#c2410c" stroke-width="2" rx="8" ry="8"/>
+<text y="433" font-family="Menlo,Consolas,monospace" font-size="16" fill="#c2410c" text-anchor="middle"><tspan x="190" dy="0">CameraCapture</tspan></text>
+<text y="461" font-family="Menlo,Consolas,monospace" font-size="13" fill="#374151" text-anchor="start"><tspan x="109" dy="0">getUserMedia</tspan><tspan x="109" dy="16.25">file picker</tspan><tspan x="109" dy="16.25">paste image</tspan><tspan x="109" dy="16.25">URL import</tspan></text>
+<rect x="315" y="405" width="175" height="92" fill="#60a5fa" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="433" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e3a5f" text-anchor="middle"><tspan x="402.5" dy="0">PDF renderer</tspan></text>
+<text y="459" font-family="Menlo,Consolas,monospace" font-size="11" fill="#374151" text-anchor="start"><tspan x="329" dy="0">renderPdfPageImages()</tspan><tspan x="329" dy="13.75">up to 4 JPEG pages</tspan><tspan x="329" dy="13.75">1400px max width</tspan></text>
+<rect x="95" y="540" width="395" height="110" fill="#93c5fd" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="568" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e3a5f" text-anchor="middle"><tspan x="292.5" dy="0">Central page.tsx state</tspan></text>
+<text y="595" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="109" dy="0">pendingMaterials, materials, selectedMaterialId</tspan><tspan x="109" dy="15">messages, question, understandingLevel</tspan><tspan x="109" dy="15">sessionMemory, learnerProfile, activeLearningCheck</tspan><tspan x="109" dy="15">TTS voice style, speed, source and target language</tspan></text>
+<rect x="95" y="700" width="190" height="95" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="8" ry="8"/>
+<text y="728" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="190" dy="0">ConversationPanel</tspan></text>
+<text y="754" font-family="Menlo,Consolas,monospace" font-size="11" fill="#374151" text-anchor="start"><tspan x="109" dy="0">messages + edit/copy</tspan><tspan x="109" dy="13.75">quick actions</tspan><tspan x="109" dy="13.75">speech trace highlight</tspan><tspan x="109" dy="13.75">progress-check banner</tspan></text>
+<rect x="315" y="700" width="175" height="95" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="8" ry="8"/>
+<text y="728" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="402.5" dy="0">VoiceRecorder</tspan></text>
+<text y="754" font-family="Menlo,Consolas,monospace" font-size="11" fill="#374151" text-anchor="start"><tspan x="329" dy="0">VAD microphone</tspan><tspan x="329" dy="13.75">turn analysis</tspan><tspan x="329" dy="13.75">WAV FormData</tspan><tspan x="329" dy="13.75">voice signals</tspan></text>
+<rect x="95" y="835" width="395" height="135" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="861" font-family="Menlo,Consolas,monospace" font-size="14" fill="#ffffff" text-anchor="start"><tspan x="109" dy="0">Browser recovery cache</tspan></text>
+<text y="887" font-family="Menlo,Consolas,monospace" font-size="12" fill="#22c55e" text-anchor="start"><tspan x="109" dy="0">localStorage:</tspan><tspan x="109" dy="14.399999999999999">phloem:last-session-id</tspan><tspan x="109" dy="14.399999999999999">phloem:session-progress:{id}</tspan><tspan x="109" dy="14.399999999999999"></tspan><tspan x="109" dy="14.399999999999999">Merges cached checks with</tspan><tspan x="109" dy="14.399999999999999">Supabase rows after reload.</tspan></text>
+<path d="M 285 450 L 315 450" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#arrow-c2410c)"/>
+<path d="M 190 500 L 190 540" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#arrow-c2410c)"/>
+<path d="M 402 500 L 402 540" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 195 650 L 195 700" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 402 650 L 402 700" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 292 650 L 292 835" fill="none" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-1e3a5f)"/>
+<rect x="605" y="405" width="215" height="90" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="433" font-family="Menlo,Consolas,monospace" font-size="16" fill="#ffffff" text-anchor="middle"><tspan x="712.5" dy="0">/api/vision/extract</tspan></text>
+<text y="460" font-family="Menlo,Consolas,monospace" font-size="12" fill="#ffffff" text-anchor="start"><tspan x="619" dy="0">Zod validates data URL,</tspan><tspan x="619" dy="15">fileName, mimeType,</tspan><tspan x="619" dy="15">targetLanguage,</tspan><tspan x="619" dy="15">pdfPageImageDataUrls &lt;= 4</tspan></text>
+<polygon points="913,407 968,450 913,493 858,450" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+<text y="447" font-family="Menlo,Consolas,monospace" font-size="14" fill="#b45309" text-anchor="middle"><tspan x="913" dy="0">mimeType</tspan><tspan x="913" dy="17.5">image?</tspan></text>
+<rect x="605" y="548" width="210" height="90" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="576" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="710" dy="0">Image path</tspan></text>
+<text y="603" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="619" dy="0">OpenAI chat.completions</tspan><tspan x="619" dy="15">image_url detail=high</tspan><tspan x="619" dy="15">response_format json_object</tspan></text>
+<rect x="850" y="548" width="235" height="90" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="576" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="967.5" dy="0">Document path</tspan></text>
+<text y="603" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="864" dy="0">pdf-parse text or mammoth raw text</tspan><tspan x="864" dy="15">+ rendered PDF page images</tspan><tspan x="864" dy="15">fallback to text-only context</tspan></text>
+<rect x="610" y="682" width="205" height="70" fill="#fee2e2" stroke="#dc2626" stroke-width="2" rx="8" ry="8"/>
+<text y="710" font-family="Menlo,Consolas,monospace" font-size="16" fill="#dc2626" text-anchor="middle"><tspan x="712.5" dy="0">Fallback context</tspan></text>
+<text y="736" font-family="Menlo,Consolas,monospace" font-size="11" fill="#374151" text-anchor="start"><tspan x="624" dy="0">If text LLM path fails:</tspan><tspan x="624" dy="13.75">FallbackTextLearningContext</tspan></text>
+<rect x="850" y="680" width="245" height="250" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="706" font-family="Menlo,Consolas,monospace" font-size="14" fill="#ffffff" text-anchor="start"><tspan x="864" dy="0">LearningContext JSON</tspan></text>
+<text y="733" font-family="Menlo,Consolas,monospace" font-size="13" fill="#22c55e" text-anchor="start"><tspan x="864" dy="0">{</tspan><tspan x="864" dy="15.6">  detectedLanguage,</tspan><tspan x="864" dy="15.6">  extractedText,</tspan><tspan x="864" dy="15.6">  topic,</tspan><tspan x="864" dy="15.6">  summary,</tspan><tspan x="864" dy="15.6">  diagramNotes,</tspan><tspan x="864" dy="15.6">  suggestedQuestion,</tspan><tspan x="864" dy="15.6">  confidence</tspan><tspan x="864" dy="15.6">}</tspan></text>
+<path d="M 820 450 L 858 450" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 858 493 L 766 548" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 968 493 L 968 548" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 815 593 L 850 755" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 968 638 L 968 680" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 815 720 L 850 720" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-dc2626)"/>
+<text y="953" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="608" dy="0">Size guard: request body &lt;= 25 MB. Client upload limit: 15 MB per file.</tspan></text>
+<rect x="1210" y="405" width="205" height="100" fill="#fed7aa" stroke="#c2410c" stroke-width="2" rx="8" ry="8"/>
+<text y="433" font-family="Menlo,Consolas,monospace" font-size="16" fill="#c2410c" text-anchor="middle"><tspan x="1312.5" dy="0">@ricky0123/vad-web</tspan></text>
+<text y="460" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="1224" dy="0">Silero VAD in browser</tspan><tspan x="1224" dy="15">/vad assets</tspan><tspan x="1224" dy="15">16 kHz mono Float32</tspan><tspan x="1224" dy="15">segments on speech end</tspan></text>
+<rect x="1455" y="405" width="225" height="100" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="433" font-family="Menlo,Consolas,monospace" font-size="16" fill="#ffffff" text-anchor="middle"><tspan x="1567.5" dy="0">/api/speech/turn</tspan></text>
+<text y="460" font-family="Menlo,Consolas,monospace" font-size="12" fill="#ffffff" text-anchor="start"><tspan x="1469" dy="0">audioPcm16Base64</tspan><tspan x="1469" dy="15">sampleRate: 16000</tspan><tspan x="1469" dy="15">durationMs</tspan><tspan x="1469" dy="15">SmartTurnResult</tspan></text>
+<polygon points="1350,555 1420,602.5 1350,650 1280,602.5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+<text y="599" font-family="Menlo,Consolas,monospace" font-size="14" fill="#b45309" text-anchor="middle"><tspan x="1351" dy="0">complete</tspan><tspan x="1351" dy="17.5">turn?</tspan></text>
+<rect x="1460" y="565" width="205" height="82" fill="#fee2e2" stroke="#dc2626" stroke-width="2" rx="8" ry="8"/>
+<text y="593" font-family="Menlo,Consolas,monospace" font-size="16" fill="#dc2626" text-anchor="middle"><tspan x="1562.5" dy="0">Not complete</tspan></text>
+<text y="620" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="1474" dy="0">accumulate audio</tspan><tspan x="1474" dy="15">wait for more speech</tspan><tspan x="1474" dy="15">2.5s long-silence fallback</tspan></text>
+<rect x="1210" y="710" width="205" height="95" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="738" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="1312.5" dy="0">/api/speech/transcribe</tspan></text>
+<text y="765" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="1224" dy="0">WAV FormData</tspan><tspan x="1224" dy="15">OpenAI audio.transcriptions</tspan><tspan x="1224" dy="15">model: gpt-4o-transcribe</tspan></text>
+<rect x="1455" y="700" width="235" height="230" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="726" font-family="Menlo,Consolas,monospace" font-size="14" fill="#ffffff" text-anchor="start"><tspan x="1469" dy="0">VoiceInteractionSignals</tspan></text>
+<text y="751" font-family="Menlo,Consolas,monospace" font-size="11" fill="#22c55e" text-anchor="start"><tspan x="1469" dy="0">{</tspan><tspan x="1469" dy="13.2">  smartTurnProbability,</tspan><tspan x="1469" dy="13.2">  smartTurnSource,</tspan><tspan x="1469" dy="13.2">  incompleteTurnCount,</tspan><tspan x="1469" dy="13.2">  forcedAfterLongSilence,</tspan><tspan x="1469" dy="13.2">  speechSegmentCount,</tspan><tspan x="1469" dy="13.2">  answerAudioDurationMs,</tspan><tspan x="1469" dy="13.2">  isShortAnswer,</tspan><tspan x="1469" dy="13.2">  isNumericAnswer,</tspan><tspan x="1469" dy="13.2">  uncertaintyMarkers</tspan><tspan x="1469" dy="13.2">}</tspan></text>
+<path d="M 1415 454 L 1455 454" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#arrow-c2410c)"/>
+<path d="M 1566 505 L 1351 555" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1420 602 L 1460 602" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 1562 565 L 1557 480 L 1415 480" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-dc2626)"/>
+<path d="M 1349 650 L 1349 710" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 1415 755 L 1455 755" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<text y="937" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="1210" dy="0">Signals are soft coaching context only.</tspan><tspan x="1210" dy="15">Prompts avoid penalizing pauses, short audio, or short transcripts by themselves.</tspan></text>
+<rect x="1810" y="405" width="215" height="88" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="433" font-family="Menlo,Consolas,monospace" font-size="16" fill="#ffffff" text-anchor="middle"><tspan x="1917.5" dy="0">/api/tutor/respond</tspan></text>
+<text y="460" font-family="Menlo,Consolas,monospace" font-size="12" fill="#ffffff" text-anchor="start"><tspan x="1824" dy="0">Validates payload</tspan><tspan x="1824" dy="15">normalizes profile/memory</tspan><tspan x="1824" dy="15">classifies turn intent</tspan></text>
+<rect x="2065" y="382" width="275" height="140" fill="#93c5fd" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="410" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e3a5f" text-anchor="middle"><tspan x="2202.5" dy="0">Layered TutorRequest</tspan></text>
+<text y="437" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="2079" dy="0">learningContext</tspan><tspan x="2079" dy="15">recent 8 messages</tspan><tspan x="2079" dy="15">sessionMemory + learnerProfile</tspan><tspan x="2079" dy="15">activeLearningCheck + evaluation</tspan><tspan x="2079" dy="15">voiceInteractionSignals</tspan><tspan x="2079" dy="15">allowDirectAnswer + languages</tspan></text>
+<polygon points="1957.5,585 2030,635 1957.5,685 1885,635" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+<text y="634" font-family="Menlo,Consolas,monospace" font-size="14" fill="#b45309" text-anchor="middle"><tspan x="1958" dy="0">LLM_PROVIDER</tspan></text>
+<rect x="1810" y="745" width="205" height="92" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="773" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="1912.5" dy="0">Anthropic</tspan></text>
+<text y="800" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="1824" dy="0">model: claude-sonnet-4-6</tspan><tspan x="1824" dy="15">strict tool schema</tspan><tspan x="1824" dy="15">return_tutor_response</tspan></text>
+<rect x="2055" y="745" width="175" height="92" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="773" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="2142.5" dy="0">Z.ai GLM</tspan></text>
+<text y="800" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="2069" dy="0">OpenAI-compatible</tspan><tspan x="2069" dy="15">baseURL from env</tspan><tspan x="2069" dy="15">JSON mode</tspan></text>
+<rect x="2245" y="712" width="120" height="235" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="738" font-family="Menlo,Consolas,monospace" font-size="14" fill="#ffffff" text-anchor="start"><tspan x="2259" dy="0">TutorResponse</tspan></text>
+<text y="762" font-family="Menlo,Consolas,monospace" font-size="10" fill="#22c55e" text-anchor="start"><tspan x="2259" dy="0">{</tspan><tspan x="2259" dy="12">  response,</tspan><tspan x="2259" dy="12">  followUpQuestion,</tspan><tspan x="2259" dy="12">  targetConcept,</tspan><tspan x="2259" dy="12">  tutorMove,</tspan><tspan x="2259" dy="12">  understandingLevel,</tspan><tspan x="2259" dy="12">  directAnswerGiven,</tspan><tspan x="2259" dy="12">  confidence,</tspan><tspan x="2259" dy="12">  memoryUpdateCandidates</tspan><tspan x="2259" dy="12">}</tspan></text>
+<rect x="1810" y="865" width="395" height="88" fill="#a7f3d0" stroke="#047857" stroke-width="2" rx="8" ry="8"/>
+<text y="893" font-family="Menlo,Consolas,monospace" font-size="16" fill="#047857" text-anchor="middle"><tspan x="2007.5" dy="0">Session memory update</tspan></text>
+<text y="920" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="1824" dy="0">updateSessionMemory() summarizes latest turn,</tspan><tspan x="1824" dy="15">strengths, misconceptions, open questions, and strategy.</tspan><tspan x="1824" dy="15">saveStoredSessionMemory() persists when sessionId exists.</tspan></text>
+<path d="M 2025 449 L 2065 449" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2202 522 L 1962 585" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1925 685 L 1913 745" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 2030 635 L 2142 745" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 2015 792 L 2245 812" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2230 792 L 2245 812" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2245 910 L 2205 910" fill="none" stroke="#047857" stroke-width="2" marker-end="url(#arrow-047857)"/>
+<text y="968" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="1810" dy="0">Source material is untrusted context in the user prompt. System prompt carries behavior and safety rules.</tspan></text>
+<rect x="2460" y="405" width="235" height="90" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="433" font-family="Menlo,Consolas,monospace" font-size="16" fill="#ffffff" text-anchor="middle"><tspan x="2577.5" dy="0">/api/speech/synthesize</tspan></text>
+<text y="460" font-family="Menlo,Consolas,monospace" font-size="12" fill="#ffffff" text-anchor="start"><tspan x="2474" dy="0">non-streamed MP3/base64</tspan><tspan x="2474" dy="15">Google/OpenAI/browser</tspan><tspan x="2474" dy="15">records Google usage</tspan></text>
+<rect x="2730" y="405" width="235" height="90" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="433" font-family="Menlo,Consolas,monospace" font-size="16" fill="#ffffff" text-anchor="middle"><tspan x="2847.5" dy="0">/api/speech/synthesize/stream</tspan></text>
+<text y="460" font-family="Menlo,Consolas,monospace" font-size="12" fill="#ffffff" text-anchor="start"><tspan x="2744" dy="0">streaming PCM</tspan><tspan x="2744" dy="15">Web Audio chunk scheduling</tspan><tspan x="2744" dy="15">sampleRate header</tspan></text>
+<polygon points="2689.5,560 2772,612.5 2689.5,665 2607,612.5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+<text y="612" font-family="Menlo,Consolas,monospace" font-size="14" fill="#b45309" text-anchor="middle"><tspan x="2688.5" dy="0">TTS_PROVIDER</tspan></text>
+<rect x="2460" y="720" width="235" height="105" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="748" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="2577.5" dy="0">Provider ladder</tspan></text>
+<text y="775" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="2474" dy="0">google: Chirp 3 HD + SSML marks</tspan><tspan x="2474" dy="15">openai: gpt-4o-mini-tts</tspan><tspan x="2474" dy="15">browser: speechSynthesis fallback</tspan></text>
+<rect x="2730" y="720" width="235" height="105" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="8" ry="8"/>
+<text y="748" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="2847.5" dy="0">Speech trace</tspan></text>
+<text y="775" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="2744" dy="0">Google timings when present</tspan><tspan x="2744" dy="15">estimated word weights otherwise</tspan><tspan x="2744" dy="15">speed-scaled playback</tspan></text>
+<ellipse cx="2675.5" cy="906" rx="127.5" ry="31" fill="#a7f3d0" stroke="#047857" stroke-width="2"/>
+<text y="907" font-family="Menlo,Consolas,monospace" font-size="13" fill="#047857" text-anchor="middle"><tspan x="2676" dy="0">Speech complete -&gt; active progress check appears</tspan></text>
+<path d="M 2577 495 L 2649 560" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2847 495 L 2689 560" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2640 665 L 2578 720" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 2735 665 L 2807 720" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 2577 825 L 2647 875" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2848 825 L 2758 875" fill="none" stroke="#1e40af" stroke-width="2" marker-end="url(#arrow-1e40af)"/>
+<rect x="2460" y="945" width="235" height="92" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="973" font-family="Menlo,Consolas,monospace" font-size="16" fill="#ffffff" text-anchor="middle"><tspan x="2577.5" dy="0">/api/tutor/evaluate</tspan></text>
+<text y="1000" font-family="Menlo,Consolas,monospace" font-size="12" fill="#ffffff" text-anchor="start"><tspan x="2474" dy="0">scores active check answer</tspan><tspan x="2474" dy="15">status: got-it, needs-practice,</tspan><tspan x="2474" dy="15">or confused</tspan></text>
+<rect x="2730" y="945" width="235" height="92" fill="#a7f3d0" stroke="#047857" stroke-width="2" rx="8" ry="8"/>
+<text y="973" font-family="Menlo,Consolas,monospace" font-size="16" fill="#047857" text-anchor="middle"><tspan x="2847.5" dy="0">/api/progress/checks</tspan></text>
+<text y="1000" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="2744" dy="0">upsert learning_check</tspan><tspan x="2744" dy="15">recompute concept_mastery</tspan><tspan x="2744" dy="15">update session timestamp</tspan></text>
+<path d="M 2608 937 L 2578 945" fill="none" stroke="#047857" stroke-width="2" marker-end="url(#arrow-047857)"/>
+<path d="M 2695 990 L 2730 990" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2730 970 L 2385 970 L 2385 910 L 2205 910" fill="none" stroke="#047857" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-047857)"/>
+<text y="1050" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="2480" dy="0">Evaluation context feeds into the next /api/tutor/respond call</tspan><tspan x="2480" dy="15">so corrective feedback happens before the next small step.</tspan></text>
+<path d="M 530 450 L 605 450" fill="none" stroke="#c2410c" stroke-width="3" marker-end="url(#arrow-c2410c)"/>
+<path d="M 490 595 L 535 595 L 535 270 L 1810 270 L 1810 449" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1690 805 L 1745 805 L 1745 449 L 1810 449" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 1095 805 L 1140 805 L 1140 270 L 2065 270 L 2065 445" fill="none" stroke="#6d28d9" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2385 805 L 2425 805 L 2425 450 L 2460 450" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<text y="1150" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="95" dy="0">Supabase data model</tspan></text>
+<polyline points="125,1180 125,1540" fill="none" stroke="#1e3a5f" stroke-width="3"/>
+<ellipse cx="125" cy="1184" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<polyline points="139,1184 189,1184" fill="none" stroke="#64748b" stroke-width="1"/>
+<text y="1186" font-family="Menlo,Consolas,monospace" font-size="15" fill="#3b82f6" text-anchor="start"><tspan x="205" dy="0">sessions</tspan></text>
+<text y="1184" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="400" dy="0">metadata: title, languages, status</tspan></text>
+<ellipse cx="125" cy="1234" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<polyline points="139,1234 189,1234" fill="none" stroke="#64748b" stroke-width="1"/>
+<text y="1236" font-family="Menlo,Consolas,monospace" font-size="15" fill="#3b82f6" text-anchor="start"><tspan x="205" dy="0">materials</tspan></text>
+<text y="1234" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="400" dy="0">learning_context JSONB + storage path</tspan></text>
+<ellipse cx="125" cy="1284" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<polyline points="139,1284 189,1284" fill="none" stroke="#64748b" stroke-width="1"/>
+<text y="1286" font-family="Menlo,Consolas,monospace" font-size="15" fill="#3b82f6" text-anchor="start"><tspan x="205" dy="0">messages</tspan></text>
+<text y="1284" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="400" dy="0">role/content/client_id optimistic UI</tspan></text>
+<ellipse cx="125" cy="1334" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<polyline points="139,1334 189,1334" fill="none" stroke="#64748b" stroke-width="1"/>
+<text y="1336" font-family="Menlo,Consolas,monospace" font-size="15" fill="#3b82f6" text-anchor="start"><tspan x="205" dy="0">session_memories</tspan></text>
+<text y="1334" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="400" dy="0">rolling memory + learner profile JSONB</tspan></text>
+<ellipse cx="125" cy="1384" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<polyline points="139,1384 189,1384" fill="none" stroke="#64748b" stroke-width="1"/>
+<text y="1386" font-family="Menlo,Consolas,monospace" font-size="15" fill="#3b82f6" text-anchor="start"><tspan x="205" dy="0">learning_checks</tspan></text>
+<text y="1384" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="400" dy="0">question, answer, status, feedback, next_review_at</tspan></text>
+<ellipse cx="125" cy="1434" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<polyline points="139,1434 189,1434" fill="none" stroke="#64748b" stroke-width="1"/>
+<text y="1436" font-family="Menlo,Consolas,monospace" font-size="15" fill="#3b82f6" text-anchor="start"><tspan x="205" dy="0">concept_mastery</tspan></text>
+<text y="1434" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="400" dy="0">attempts, correct_count, mastery_score</tspan></text>
+<ellipse cx="125" cy="1484" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<polyline points="139,1484 189,1484" fill="none" stroke="#64748b" stroke-width="1"/>
+<text y="1486" font-family="Menlo,Consolas,monospace" font-size="15" fill="#3b82f6" text-anchor="start"><tspan x="205" dy="0">tts_usage_months</tspan></text>
+<text y="1484" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="400" dy="0">provider/month character and request counts</tspan></text>
+<rect x="880" y="1135" width="250" height="145" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1161" font-family="Menlo,Consolas,monospace" font-size="14" fill="#ffffff" text-anchor="start"><tspan x="894" dy="0">Storage object path</tspan></text>
+<text y="1187" font-family="Menlo,Consolas,monospace" font-size="12" fill="#22c55e" text-anchor="start"><tspan x="894" dy="0">materials bucket:</tspan><tspan x="894" dy="14.399999999999999">{ownerKey}/{sessionId}/</tspan><tspan x="894" dy="14.399999999999999">  {materialId}/{fileName}</tspan><tspan x="894" dy="14.399999999999999"></tspan><tspan x="894" dy="14.399999999999999">Signed URLs are generated</tspan><tspan x="894" dy="14.399999999999999">server-side for image previews.</tspan></text>
+<rect x="880" y="1310" width="250" height="92" fill="#fee2e2" stroke="#dc2626" stroke-width="2" rx="8" ry="8"/>
+<text y="1338" font-family="Menlo,Consolas,monospace" font-size="16" fill="#dc2626" text-anchor="middle"><tspan x="1005" dy="0">Server-only keys</tspan></text>
+<text y="1365" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="894" dy="0">getSupabaseAdmin()</tspan><tspan x="894" dy="15">uses SUPABASE_SERVICE_ROLE_KEY</tspan><tspan x="894" dy="15">or SUPABASE_SECRET_KEY</tspan><tspan x="894" dy="15">never client-side</tspan></text>
+<rect x="1165" y="1135" width="225" height="120" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="8" ry="8"/>
+<text y="1163" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="1277.5" dy="0">Graceful degradation</tspan></text>
+<text y="1189" font-family="Menlo,Consolas,monospace" font-size="11" fill="#374151" text-anchor="start"><tspan x="1179" dy="0">No Supabase?</tspan><tspan x="1179" dy="13.75">Sessions/checks still work</tspan><tspan x="1179" dy="13.75">in memory.</tspan><tspan x="1179" dy="13.75">Missing progress tables?</tspan><tspan x="1179" dy="13.75">Routes return persisted:false.</tspan></text>
+<rect x="1165" y="1290" width="225" height="110" fill="#a7f3d0" stroke="#047857" stroke-width="2" rx="8" ry="8"/>
+<text y="1318" font-family="Menlo,Consolas,monospace" font-size="16" fill="#047857" text-anchor="middle"><tspan x="1277.5" dy="0">Usage RPC</tspan></text>
+<text y="1345" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="1179" dy="0">increment_tts_usage_month()</tspan><tspan x="1179" dy="15">upserts monthly rows</tspan><tspan x="1179" dy="15">returns usage snapshot</tspan></text>
+<path d="M 865 1230 L 880 1210" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1005 1280 L 1005 1310" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-dc2626)"/>
+<path d="M 2730 1035 L 2210 1105 L 1450 1320" fill="none" stroke="#047857" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-047857)"/>
+<rect x="1515" y="1130" width="255" height="140" fill="#93c5fd" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="1158" font-family="Menlo,Consolas,monospace" font-size="16" fill="#1e3a5f" text-anchor="middle"><tspan x="1642.5" dy="0">env.ts config</tspan></text>
+<text y="1183" font-family="Menlo,Consolas,monospace" font-size="10" fill="#374151" text-anchor="start"><tspan x="1529" dy="0">LLM_PROVIDER:</tspan><tspan x="1529" dy="12.5">anthropic | zai</tspan><tspan x="1529" dy="12.5">TTS_PROVIDER:</tspan><tspan x="1529" dy="12.5">browser | openai | google</tspan><tspan x="1529" dy="12.5">OPENAI_VISION_MODEL: gpt-4o</tspan><tspan x="1529" dy="12.5">OPENAI_STT_MODEL: gpt-4o-transcribe</tspan><tspan x="1529" dy="12.5">DEFAULT_TUTOR_LANGUAGE: zh-CN</tspan></text>
+<rect x="1810" y="1130" width="255" height="140" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="1158" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="1937.5" dy="0">OpenAI</tspan></text>
+<text y="1185" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="1824" dy="0">Vision extraction: GPT-4o</tspan><tspan x="1824" dy="15">STT: gpt-4o-transcribe</tspan><tspan x="1824" dy="15">TTS option: gpt-4o-mini-tts</tspan><tspan x="1824" dy="15">JSON/object responses validated</tspan></text>
+<rect x="2105" y="1130" width="255" height="140" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="1158" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="2232.5" dy="0">Tutor LLMs</tspan></text>
+<text y="1185" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="2119" dy="0">Anthropic: strict tool schema</tspan><tspan x="2119" dy="15">Z.ai: OpenAI-compatible JSON mode</tspan><tspan x="2119" dy="15">Evaluation uses same provider choice</tspan></text>
+<rect x="2400" y="1130" width="255" height="140" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="1158" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="2527.5" dy="0">Google Cloud TTS</tspan></text>
+<text y="1185" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="2414" dy="0">Chirp 3 HD voices</tspan><tspan x="2414" dy="15">SSML &lt;mark&gt; word timing</tspan><tspan x="2414" dy="15">streaming PCM support</tspan><tspan x="2414" dy="15">monthly free-tier tracking</tspan></text>
+<rect x="2695" y="1130" width="255" height="140" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="1158" font-family="Menlo,Consolas,monospace" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="2822.5" dy="0">Smart Turn</tspan></text>
+<text y="1185" font-family="Menlo,Consolas,monospace" font-size="12" fill="#374151" text-anchor="start"><tspan x="2709" dy="0">Remote endpoint if configured</tspan><tspan x="2709" dy="15">else scripts/smart_turn_worker.py</tspan><tspan x="2709" dy="15">ONNX model path</tspan><tspan x="2709" dy="15">fallback: duration &gt;= 350ms</tspan></text>
+<rect x="1515" y="1335" width="625" height="250" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1361" font-family="Menlo,Consolas,monospace" font-size="14" fill="#ffffff" text-anchor="start"><tspan x="1529" dy="0">API route catalog</tspan></text>
+<text y="1387" font-family="Menlo,Consolas,monospace" font-size="12" fill="#22c55e" text-anchor="start"><tspan x="1529" dy="0">GET  /api/health</tspan><tspan x="1529" dy="14.399999999999999">POST /api/vision/extract</tspan><tspan x="1529" dy="14.399999999999999">POST /api/speech/turn</tspan><tspan x="1529" dy="14.399999999999999">POST /api/speech/transcribe</tspan><tspan x="1529" dy="14.399999999999999">POST /api/speech/synthesize</tspan><tspan x="1529" dy="14.399999999999999">POST /api/speech/synthesize/stream</tspan><tspan x="1529" dy="14.399999999999999">POST /api/tutor/respond</tspan><tspan x="1529" dy="14.399999999999999">POST /api/tutor/evaluate</tspan><tspan x="1529" dy="14.399999999999999">GET,POST /api/sessions</tspan><tspan x="1529" dy="14.399999999999999">GET,DELETE /api/sessions/{sessionId}</tspan><tspan x="1529" dy="14.399999999999999">POST,PATCH /api/sessions/messages</tspan><tspan x="1529" dy="14.399999999999999">GET /api/materials</tspan><tspan x="1529" dy="14.399999999999999">DELETE /api/materials/{materialId}</tspan><tspan x="1529" dy="14.399999999999999">POST,DELETE /api/progress/checks</tspan><tspan x="1529" dy="14.399999999999999">GET /api/usage/tts</tspan></text>
+<rect x="2180" y="1335" width="780" height="250" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1361" font-family="Menlo,Consolas,monospace" font-size="14" fill="#ffffff" text-anchor="start"><tspan x="2194" dy="0">Concrete payload/result contracts</tspan></text>
+<text y="1387" font-family="Menlo,Consolas,monospace" font-size="12" fill="#22c55e" text-anchor="start"><tspan x="2194" dy="0">Learning check status:</tspan><tspan x="2194" dy="14.399999999999999">&quot;got-it&quot; | &quot;needs-practice&quot; | &quot;confused&quot;</tspan><tspan x="2194" dy="14.399999999999999"></tspan><tspan x="2194" dy="14.399999999999999">Tutor move:</tspan><tspan x="2194" dy="14.399999999999999">&quot;hint&quot; | &quot;explain&quot; | &quot;feedback&quot; | &quot;quiz&quot; |</tspan><tspan x="2194" dy="14.399999999999999">&quot;summary&quot; | &quot;direct_answer&quot; | &quot;clarify&quot;</tspan><tspan x="2194" dy="14.399999999999999"></tspan><tspan x="2194" dy="14.399999999999999">Turn intent:</tspan><tspan x="2194" dy="14.399999999999999">&quot;ask_question&quot; | &quot;answer_check&quot; | &quot;request_summary&quot; |</tspan><tspan x="2194" dy="14.399999999999999">&quot;request_direct_answer&quot; | &quot;practice_concept&quot; |</tspan><tspan x="2194" dy="14.399999999999999">&quot;translate_or_read&quot; | &quot;off_topic&quot;</tspan><tspan x="2194" dy="14.399999999999999"></tspan><tspan x="2194" dy="14.399999999999999">Mastery update:</tspan><tspan x="2194" dy="14.399999999999999">score = previous * 0.62 + observed * 0.38</tspan><tspan x="2194" dy="14.399999999999999">review delay: confused=10m, needs-practice=30m/2h, got-it=1d/3d/7d</tspan></text>
+<path d="M 1770 1200 L 1810 1200" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1770 1225 L 2105 1225" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1770 1250 L 2400 1250" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1770 1270 L 2695 1270" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1810 1130 L 1640 1015 L 1090 930 L 1090 805" fill="none" stroke="#6d28d9" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2232 1130 L 2137 970 L 2137 837" fill="none" stroke="#6d28d9" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2528 1130 L 2568 980 L 2568 825" fill="none" stroke="#6d28d9" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2822 1130 L 2592 1010 L 1637 647" fill="none" stroke="#6d28d9" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-6d28d9)"/>
+</svg>

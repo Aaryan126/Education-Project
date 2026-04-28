@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1885" height="880" viewBox="10 -14 1885 880">
+  <rect x="10" y="-14" width="1885" height="880" fill="#ffffff"/>
+  <defs><marker id="ah_chip_page_to_tutor" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#6d28d9"/></marker><marker id="ah_chip_chat_to_tutor" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#6d28d9"/></marker><marker id="ah_chip_memory_to_tutor" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#6d28d9"/></marker><marker id="ah_a_learner_to_decision" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#c2410c"/></marker><marker id="ah_a_decision_to_message" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#b45309"/></marker><marker id="ah_a_message_to_tutor" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#1e40af"/></marker><marker id="ah_a_tutor_to_voice" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#6d28d9"/></marker><marker id="ah_a_not_yet_loop" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#b45309"/></marker><marker id="ah_a_voice_to_practice" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#047857"/></marker><marker id="ah_a_practice_to_score" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#b45309"/></marker><marker id="ah_a_score_to_memory" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#1e40af"/></marker><marker id="ah_a_memory_to_tutor" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 10 4 L 0 8 z" fill="#047857"/></marker></defs>
+  <rect x="1495" y="54" width="260" height="46" rx="16" stroke="#1e40af" stroke-width="2" fill="#dbeafe"/>
+  <ellipse cx="207.5" cy="307.5" rx="127.5" ry="77.5" stroke="#c2410c" stroke-width="2" fill="#fed7aa"/>
+  <ellipse cx="117" cy="263" rx="17" ry="17" stroke="#c2410c" stroke-width="2" fill="#ffffff"/>
+  <polygon points="540,215 650,307.5 540,400 430,307.5" stroke="#b45309" stroke-width="2" fill="#fef3c7"/>
+  <rect x="735" y="230" width="270" height="155" rx="16" stroke="#1e40af" stroke-width="2" fill="#dbeafe"/>
+  <ellipse cx="772" cy="263" rx="17" ry="17" stroke="#1e40af" stroke-width="2" fill="#ffffff"/>
+  <rect x="1110" y="205" width="340" height="210" rx="16" stroke="#6d28d9" stroke-width="2" fill="#ddd6fe"/>
+  <ellipse cx="1147" cy="239" rx="17" ry="17" stroke="#6d28d9" stroke-width="2" fill="#ffffff"/>
+  <rect x="1080" y="126" width="118" height="42" rx="16" stroke="#6d28d9" stroke-width="2" fill="#ffffff"/>
+  <rect x="1212" y="108" width="116" height="42" rx="16" stroke="#6d28d9" stroke-width="2" fill="#ffffff"/>
+  <rect x="1342" y="126" width="132" height="42" rx="16" stroke="#6d28d9" stroke-width="2" fill="#ffffff"/>
+  <polyline points="1140,168 1168,205" fill="none" stroke="#6d28d9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_chip_page_to_tutor)"/>
+  <polyline points="1270,150 1270,205" fill="none" stroke="#6d28d9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_chip_chat_to_tutor)"/>
+  <polyline points="1404,168 1368,205" fill="none" stroke="#6d28d9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_chip_memory_to_tutor)"/>
+  <rect x="1550" y="230" width="285" height="155" rx="16" stroke="#047857" stroke-width="2" fill="#a7f3d0"/>
+  <ellipse cx="1587" cy="263" rx="17" ry="17" stroke="#047857" stroke-width="2" fill="#ffffff"/>
+  <polyline points="335,307 430,307" fill="none" stroke="#c2410c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_learner_to_decision)"/>
+  <polyline points="650,307 735,307" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_decision_to_message)"/>
+  <polyline points="1005,307 1110,307" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_message_to_tutor)"/>
+  <polyline points="1450,307 1550,307" fill="none" stroke="#6d28d9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_tutor_to_voice)"/>
+  <polyline points="532,400 532,474 210,474 210,385" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_not_yet_loop)"/>
+  <rect x="332" y="440" width="210" height="62" rx="16" stroke="#b45309" stroke-width="2" fill="#ffffff"/>
+  <rect x="735" y="430" width="270" height="82" rx="16" stroke="#dc2626" stroke-width="2" fill="#fee2e2"/>
+  <rect x="720" y="660" width="300" height="145" rx="16" stroke="#b45309" stroke-width="2" fill="#fef3c7"/>
+  <ellipse cx="757" cy="693" rx="17" ry="17" stroke="#b45309" stroke-width="2" fill="#ffffff"/>
+  <rect x="1110" y="660" width="320" height="145" rx="16" stroke="#1e40af" stroke-width="2" fill="#dbeafe"/>
+  <rect x="1140" y="728" width="80" height="34" rx="16" stroke="#047857" stroke-width="2" fill="#a7f3d0"/>
+  <rect x="1230" y="728" width="118" height="34" rx="16" stroke="#b45309" stroke-width="2" fill="#fef3c7"/>
+  <rect x="1164" y="772" width="116" height="34" rx="16" stroke="#dc2626" stroke-width="2" fill="#fee2e2"/>
+  <rect x="1520" y="660" width="315" height="145" rx="16" stroke="#047857" stroke-width="2" fill="#a7f3d0"/>
+  <ellipse cx="1557" cy="693" rx="17" ry="17" stroke="#047857" stroke-width="2" fill="#ffffff"/>
+  <polyline points="1692,385 1692,530 870,530 870,660" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_voice_to_practice)"/>
+  <polyline points="1020,732 1110,732" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_practice_to_score)"/>
+  <polyline points="1430,732 1520,732" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_score_to_memory)"/>
+  <polyline points="1678,660 1678,492 1430,492 1430,415" fill="none" stroke="#047857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah_a_memory_to_tutor)"/>
+  <text font-family="Arial, sans-serif" font-size="38" fill="#1e40af" text-anchor="start"><tspan x="70" y="84">Voice Tutor AI Pipeline</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="18" fill="#64748b" text-anchor="start"><tspan x="74" y="120">Speak -&gt; wait for a complete thought -&gt; understand -&gt; teach out loud -&gt; check progress.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="1625" y="83">Readable overview</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="16" fill="#c2410c" text-anchor="middle"><tspan x="117" y="268">1</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="21" fill="#374151" text-anchor="middle"><tspan x="207" y="277">Learner speaks</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="15" fill="#374151" text-anchor="middle"><tspan x="206" y="311">Hands-free mic listens.</tspan><tspan x="206" y="330.2">Listening pauses while</tspan><tspan x="206" y="349.4">the tutor is talking.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="21" fill="#374151" text-anchor="middle"><tspan x="540" y="296">Finished</tspan><tspan x="540" y="320.15">speaking?</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="14" fill="#b45309" text-anchor="start"><tspan x="616" y="314">yes</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="14" fill="#b45309" text-anchor="middle"><tspan x="530" y="431">not yet: wait</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="16" fill="#1e40af" text-anchor="middle"><tspan x="772" y="268">2</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="21" fill="#374151" text-anchor="middle"><tspan x="870" y="277">Speech becomes</tspan><tspan x="870" y="303.25">a message</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="15" fill="#374151" text-anchor="middle"><tspan x="870" y="325">Words are transcribed.</tspan><tspan x="870" y="343.3">Helpful voice signals</tspan><tspan x="870" y="361.6">travel with the message.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="16" fill="#6d28d9" text-anchor="middle"><tspan x="1147" y="244">3</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="21" fill="#374151" text-anchor="middle"><tspan x="1280" y="259">Tutor thinks</tspan><tspan x="1280" y="285.25">with context</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="15" fill="#374151" text-anchor="middle"><tspan x="1280" y="315">Uses the page, recent chat,</tspan><tspan x="1280" y="333.75">learner memory, and progress.</tspan><tspan x="1280" y="352.5">Goal: guide thinking.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="13" fill="#6d28d9" text-anchor="middle"><tspan x="1139" y="152">lesson page</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="13" fill="#6d28d9" text-anchor="middle"><tspan x="1270" y="134">recent chat</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="13" fill="#6d28d9" text-anchor="middle"><tspan x="1408" y="152">learner memory</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="16" fill="#047857" text-anchor="middle"><tspan x="1587" y="268">4</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="21" fill="#374151" text-anchor="middle"><tspan x="1692" y="277">Tutor speaks back</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="15" fill="#374151" text-anchor="middle"><tspan x="1693" y="311">Short spoken guidance.</tspan><tspan x="1693" y="330.2">Voice speed and highlighting</tspan><tspan x="1693" y="349.4">help the learner follow.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="14" fill="#374151" text-anchor="middle"><tspan x="437" y="469">Phloem waits</tspan><tspan x="437" y="485.1">without cutting off</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="15" fill="#dc2626" text-anchor="middle"><tspan x="870" y="461">Voice signals help support</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="14" fill="#374151" text-anchor="middle"><tspan x="870" y="488">They do not grade correctness.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="24" fill="#1e40af" text-anchor="start"><tspan x="80" y="582">After the tutor speaks, learning is checked gently</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="16" fill="#64748b" text-anchor="start"><tspan x="84" y="612">One focused check updates mastery and improves the next reply.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="16" fill="#b45309" text-anchor="middle"><tspan x="757" y="698">5</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="21" fill="#374151" text-anchor="middle"><tspan x="870" y="707">One practice check</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="15" fill="#374151" text-anchor="middle"><tspan x="870" y="741">Activates only after</tspan><tspan x="870" y="760.2">tutor audio finishes.</tspan><tspan x="870" y="779.4">The next answer is used.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="21" fill="#374151" text-anchor="middle"><tspan x="1270" y="705">Answer is scored</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="13" fill="#374151" text-anchor="middle"><tspan x="1180" y="751">Got it</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="13" fill="#374151" text-anchor="middle"><tspan x="1289" y="751">Needs practice</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="13" fill="#374151" text-anchor="middle"><tspan x="1222" y="795">Confused</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="16" fill="#047857" text-anchor="middle"><tspan x="1557" y="698">6</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="21" fill="#374151" text-anchor="middle"><tspan x="1677" y="707">Next reply improves</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="15" fill="#374151" text-anchor="middle"><tspan x="1675" y="741">Mastery and session memory</tspan><tspan x="1675" y="760.2">shape the next explanation.</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="14" fill="#047857" text-anchor="middle"><tspan x="1283" y="516">after audio finishes</tspan></text>
+  <text font-family="Arial, sans-serif" font-size="14" fill="#047857" text-anchor="middle"><tspan x="1544" y="476">progress guides the next turn</tspan></text>
+</svg>

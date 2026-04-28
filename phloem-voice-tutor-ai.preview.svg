@@ -1,0 +1,224 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -25 3000 1575" width="3000" height="1575">
+<defs><marker id="arrow-c2410c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#c2410c"/></marker><marker id="arrow-1e3a5f" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#1e3a5f"/></marker><marker id="arrow-6d28d9" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#6d28d9"/></marker><marker id="arrow-dc2626" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#dc2626"/></marker><marker id="arrow-b45309" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#b45309"/></marker><marker id="arrow-047857" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#047857"/></marker><marker id="arrow-1e40af" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#1e40af"/></marker></defs>
+<rect x="-50" y="-25" width="3000" height="1575" fill="#ffffff"/>
+<text y="67" font-family="Menlo,Consolas,monospace" font-size="32" fill="#1e40af" text-anchor="start"><tspan x="60" dy="0">Voice Tutor AI Architecture</tspan></text>
+<text y="95" font-family="Menlo,Consolas,monospace" font-size="13" fill="#64748b" text-anchor="start"><tspan x="60" dy="0">The voice tutor is a gated learning loop: speech is segmented into a completed turn, transcribed, enriched with voice signals,</tspan><tspan x="60" dy="16.25">optionally evaluated as retrieval evidence, routed through a Socratic LLM, spoken back, then converted into the next progress check.</tspan></text>
+<polyline points="115,190 2715,190" fill="none" stroke="#1e3a5f" stroke-width="3"/>
+<ellipse cx="117" cy="190" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="227" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="115" dy="0">Listen</tspan></text>
+<text y="249" font-family="Menlo,Consolas,monospace" font-size="11" fill="#64748b" text-anchor="middle"><tspan x="115" dy="0">VAD speech events</tspan></text>
+<ellipse cx="507" cy="190" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="227" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="505" dy="0">Complete</tspan></text>
+<text y="249" font-family="Menlo,Consolas,monospace" font-size="11" fill="#64748b" text-anchor="middle"><tspan x="505" dy="0">Smart Turn or fallback</tspan></text>
+<ellipse cx="897" cy="190" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="227" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="895" dy="0">Transcribe</tspan></text>
+<text y="249" font-family="Menlo,Consolas,monospace" font-size="11" fill="#64748b" text-anchor="middle"><tspan x="895" dy="0">OpenAI STT</tspan></text>
+<ellipse cx="1287" cy="190" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="227" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="1285" dy="0">Assemble</tspan></text>
+<text y="249" font-family="Menlo,Consolas,monospace" font-size="11" fill="#64748b" text-anchor="middle"><tspan x="1285" dy="0">TutorRequest</tspan></text>
+<ellipse cx="1677" cy="190" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="227" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="1675" dy="0">Respond</tspan></text>
+<text y="249" font-family="Menlo,Consolas,monospace" font-size="11" fill="#64748b" text-anchor="middle"><tspan x="1675" dy="0">Anthropic or Z.ai</tspan></text>
+<ellipse cx="2067" cy="190" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="227" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="2065" dy="0">Speak</tspan></text>
+<text y="249" font-family="Menlo,Consolas,monospace" font-size="11" fill="#64748b" text-anchor="middle"><tspan x="2065" dy="0">TTS + speech trace</tspan></text>
+<ellipse cx="2457" cy="190" rx="7" ry="7" fill="#3b82f6" stroke="#1e3a5f" stroke-width="1"/>
+<text y="227" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="2455" dy="0">Check</tspan></text>
+<text y="249" font-family="Menlo,Consolas,monospace" font-size="11" fill="#64748b" text-anchor="middle"><tspan x="2455" dy="0">progress after audio</tspan></text>
+<rect x="60" y="315" width="455" height="560" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="78" dy="0">1. Browser Voice Capture</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="78" dy="0">Mic state, VAD events,</tspan><tspan x="78" dy="15">and 16 kHz mono turns.</tspan></text>
+<rect x="555" y="315" width="430" height="560" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="573" dy="0">2. Turn Completion</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="573" dy="0">/api/speech/turn checks</tspan><tspan x="573" dy="15">pause completion.</tspan></text>
+<rect x="1025" y="315" width="500" height="560" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="1043" dy="0">3. Transcript + Voice Signals</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="1043" dy="0">Complete audio becomes a transcript</tspan><tspan x="1043" dy="15">plus soft coaching metadata.</tspan></text>
+<rect x="1565" y="315" width="675" height="560" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="1583" dy="0">4. Tutor AI Core</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="1583" dy="0">Active check answers are evaluated first.</tspan><tspan x="1583" dy="15">Then the app builds TutorRequest.</tspan></text>
+<rect x="2280" y="315" width="610" height="560" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="353" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="2298" dy="0">5. Spoken Output</tspan></text>
+<text y="375" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="2298" dy="0">Assistant text is revealed and spoken.</tspan><tspan x="2298" dy="15">Completion creates the next check.</tspan></text>
+<rect x="60" y="930" width="785" height="560" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="968" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="78" dy="0">6. Retrieval + Memory Loop</tspan></text>
+<text y="990" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="78" dy="0">Learning progress comes from answers,</tspan><tspan x="78" dy="15">not model-estimated understanding alone.</tspan></text>
+<rect x="890" y="930" width="1220" height="560" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="968" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="908" dy="0">7. Runtime Providers + Contracts</tspan></text>
+<text y="990" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="908" dy="0">Provider choices and typed payloads</tspan><tspan x="908" dy="15">are the operational control plane.</tspan></text>
+<rect x="2155" y="930" width="735" height="560" fill="transparent" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="12 9" rx="8" ry="8"/>
+<text y="968" font-family="Menlo,Consolas,monospace" font-size="20" fill="#1e40af" text-anchor="start"><tspan x="2173" dy="0">8. UI Surface + Controls</tspan></text>
+<text y="990" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="2173" dy="0">ConversationPanel shows tutor state.</tspan><tspan x="2173" dy="15">page.tsx owns orchestration.</tspan></text>
+<rect x="95" y="410" width="195" height="120" fill="#fed7aa" stroke="#c2410c" stroke-width="2" rx="8" ry="8"/>
+<text y="435" font-family="Menlo,Consolas,monospace" font-size="15" fill="#c2410c" text-anchor="middle"><tspan x="192.5" dy="0">MicVAD.new()</tspan></text>
+<text y="461.4" font-family="Menlo,Consolas,monospace" font-size="9.4" fill="#374151" text-anchor="start"><tspan x="109" dy="0">model: v5</tspan><tspan x="109" dy="11.28">baseAssetPath: /vad/</tspan><tspan x="109" dy="11.28">pos threshold: 0.5</tspan><tspan x="109" dy="11.28">neg threshold: 0.35</tspan><tspan x="109" dy="11.28">redemptionMs: 450</tspan><tspan x="109" dy="11.28">preSpeechPadMs: 200</tspan><tspan x="109" dy="11.28">minSpeechMs: 250</tspan></text>
+<rect x="315" y="410" width="165" height="120" fill="#60a5fa" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="435" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e3a5f" text-anchor="middle"><tspan x="397.5" dy="0">getUserMedia</tspan></text>
+<text y="462.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="329" dy="0">channelCount: 1</tspan><tspan x="329" dy="12.6">echoCancellation</tspan><tspan x="329" dy="12.6">noiseSuppression</tspan><tspan x="329" dy="12.6">autoGainControl</tspan><tspan x="329" dy="12.6">processorType: auto</tspan></text>
+<rect x="95" y="575" width="385" height="98" fill="#93c5fd" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="600" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e3a5f" text-anchor="middle"><tspan x="287.5" dy="0">Speech event queue</tspan></text>
+<text y="627.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="109" dy="0">onSpeechStart -&gt; Listening</tspan><tspan x="109" dy="12.6">onSpeechEnd(audio) -&gt; queueSpeechEnd()</tspan><tspan x="109" dy="12.6">onVADMisfire -&gt; stay listening</tspan><tspan x="109" dy="12.6">analysisQueueRef serializes pauses</tspan></text>
+<rect x="95" y="705" width="385" height="120" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="730" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="109" dy="0">Audio turn artifact</tspan></text>
+<text y="754" font-family="Menlo,Consolas,monospace" font-size="11" fill="#22c55e" text-anchor="start"><tspan x="109" dy="0">Float32Array segments</tspan><tspan x="109" dy="12.979999999999999">sampleRate: 16000</tspan><tspan x="109" dy="12.979999999999999">concatAudio(previous, next)</tspan><tspan x="109" dy="12.979999999999999">window sent to turn check: last 8 seconds</tspan></text>
+<path d="M 290 470 L 315 470" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#arrow-c2410c)"/>
+<path d="M 397 530 L 397 575" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 192 530 L 192 575" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#arrow-c2410c)"/>
+<path d="M 287 673 L 287 705" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<rect x="590" y="410" width="190" height="105" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="435" font-family="Menlo,Consolas,monospace" font-size="15" fill="#ffffff" text-anchor="middle"><tspan x="685" dy="0">/api/speech/turn</tspan></text>
+<text y="463" font-family="Menlo,Consolas,monospace" font-size="11" fill="#ffffff" text-anchor="start"><tspan x="604" dy="0">Zod schema:</tspan><tspan x="604" dy="13.2">audioPcm16Base64</tspan><tspan x="604" dy="13.2">sampleRate: 16000</tspan><tspan x="604" dy="13.2">durationMs &gt; 0</tspan></text>
+<polygon points="877.5,430 940,475 877.5,520 815,475" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+<text y="476" font-family="Menlo,Consolas,monospace" font-size="14" fill="#b45309" text-anchor="middle"><tspan x="877" dy="0">complete?</tspan></text>
+<rect x="590" y="575" width="190" height="115" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="600" font-family="Menlo,Consolas,monospace" font-size="15" fill="#6d28d9" text-anchor="middle"><tspan x="685" dy="0">Smart Turn sources</tspan></text>
+<text y="628" font-family="Menlo,Consolas,monospace" font-size="11" fill="#374151" text-anchor="start"><tspan x="604" dy="0">1. SMART_TURN_ENDPOINT</tspan><tspan x="604" dy="13.2">2. scripts/smart_turn_worker.py</tspan><tspan x="604" dy="13.2">3. vad-fallback</tspan><tspan x="604" dy="13.2">4. disabled</tspan></text>
+<rect x="805" y="590" width="145" height="100" fill="#fee2e2" stroke="#dc2626" stroke-width="2" rx="8" ry="8"/>
+<text y="615" font-family="Menlo,Consolas,monospace" font-size="15" fill="#dc2626" text-anchor="middle"><tspan x="877.5" dy="0">Not complete</tspan></text>
+<text y="642.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="819" dy="0">increment incomplete count</tspan><tspan x="819" dy="12.6">keep pending audio</tspan><tspan x="819" dy="12.6">fallback timer: 2500ms</tspan></text>
+<rect x="590" y="725" width="360" height="105" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="750" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="604" dy="0">SmartTurnResult</tspan></text>
+<text y="773" font-family="Menlo,Consolas,monospace" font-size="10" fill="#22c55e" text-anchor="start"><tspan x="604" dy="0">{</tspan><tspan x="604" dy="11.799999999999999">  complete: boolean,</tspan><tspan x="604" dy="11.799999999999999">  probability: number,</tspan><tspan x="604" dy="11.799999999999999">  source: &quot;smart-turn-endpoint&quot; | &quot;smart-turn-python&quot; |</tspan><tspan x="604" dy="11.799999999999999">          &quot;vad-fallback&quot; | &quot;disabled&quot;,</tspan><tspan x="604" dy="11.799999999999999">  reason?: string</tspan><tspan x="604" dy="11.799999999999999">}</tspan></text>
+<path d="M 515 765 L 590 460" fill="none" stroke="#c2410c" stroke-width="3" marker-end="url(#arrow-c2410c)"/>
+<path d="M 780 462 L 815 462" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 780 632 L 875 520" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 940 480 L 975 480 L 975 630 L 855 630" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-dc2626)"/>
+<path d="M 877 520 L 877 725" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<rect x="1060" y="410" width="190" height="100" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="435" font-family="Menlo,Consolas,monospace" font-size="15" fill="#ffffff" text-anchor="middle"><tspan x="1155" dy="0">/api/speech/transcribe</tspan></text>
+<text y="462.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#ffffff" text-anchor="start"><tspan x="1074" dy="0">FormData:</tspan><tspan x="1074" dy="12.6">audio: question.wav</tspan><tspan x="1074" dy="12.6">language: sourceLanguage</tspan><tspan x="1074" dy="12.6">returns { text, model }</tspan></text>
+<rect x="1280" y="410" width="205" height="100" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="435" font-family="Menlo,Consolas,monospace" font-size="15" fill="#6d28d9" text-anchor="middle"><tspan x="1382.5" dy="0">OpenAI STT</tspan></text>
+<text y="462.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="1294" dy="0">client.audio.transcriptions.create()</tspan><tspan x="1294" dy="12.6">model: OPENAI_STT_MODEL</tspan><tspan x="1294" dy="12.6">default: gpt-4o-transcribe</tspan></text>
+<rect x="1060" y="565" width="425" height="225" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="590" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="1074" dy="0">VoiceInteractionSignals</tspan></text>
+<text y="613" font-family="Menlo,Consolas,monospace" font-size="10" fill="#22c55e" text-anchor="start"><tspan x="1074" dy="0">{</tspan><tspan x="1074" dy="11.799999999999999">  inputMode: &quot;voice&quot;,</tspan><tspan x="1074" dy="11.799999999999999">  smartTurnProbability,</tspan><tspan x="1074" dy="11.799999999999999">  smartTurnSource,</tspan><tspan x="1074" dy="11.799999999999999">  incompleteTurnCount,</tspan><tspan x="1074" dy="11.799999999999999">  forcedAfterLongSilence,</tspan><tspan x="1074" dy="11.799999999999999">  speechSegmentCount,</tspan><tspan x="1074" dy="11.799999999999999">  answerAudioDurationMs,</tspan><tspan x="1074" dy="11.799999999999999">  transcriptWordCount,</tspan><tspan x="1074" dy="11.799999999999999">  transcriptCharacterCount,</tspan><tspan x="1074" dy="11.799999999999999">  transcriptHasUncertaintyMarkers,</tspan><tspan x="1074" dy="11.799999999999999">  uncertaintyMarkers,</tspan><tspan x="1074" dy="11.799999999999999">  isShortAnswer,</tspan><tspan x="1074" dy="11.799999999999999">  isNumericAnswer</tspan><tspan x="1074" dy="11.799999999999999">}</tspan></text>
+<text y="822" font-family="Menlo,Consolas,monospace" font-size="12" fill="#64748b" text-anchor="start"><tspan x="1065" dy="0">Signals are coaching context only.</tspan><tspan x="1065" dy="15">They never make an answer wrong by themselves.</tspan></text>
+<path d="M 950 780 L 1005 780 L 1005 460 L 1060 460" fill="none" stroke="#b45309" stroke-width="3" marker-end="url(#arrow-b45309)"/>
+<path d="M 1250 460 L 1280 460" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1382 510 L 1272 565" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 1155 510 L 1155 565" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<rect x="1600" y="405" width="185" height="95" fill="#93c5fd" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="430" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e3a5f" text-anchor="middle"><tspan x="1692.5" dy="0">submitQuestion()</tspan></text>
+<text y="457.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="1614" dy="0">voice transcript enters same path</tspan><tspan x="1614" dy="12.6">as typed text</tspan><tspan x="1614" dy="12.6">AbortController guards</tspan><tspan x="1614" dy="12.6">in-flight tutor call</tspan></text>
+<polygon points="1872.5,405 1935,452.5 1872.5,500 1810,452.5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+<text y="448" font-family="Menlo,Consolas,monospace" font-size="13" fill="#b45309" text-anchor="middle"><tspan x="1872" dy="0">active</tspan><tspan x="1872" dy="16.25">check?</tspan></text>
+<rect x="1965" y="390" width="230" height="125" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="415" font-family="Menlo,Consolas,monospace" font-size="15" fill="#ffffff" text-anchor="middle"><tspan x="2080" dy="0">/api/tutor/evaluate</tspan></text>
+<text y="442" font-family="Menlo,Consolas,monospace" font-size="10" fill="#ffffff" text-anchor="start"><tspan x="1979" dy="0">Retrieval answer is scored first.</tspan><tspan x="1979" dy="12">Status: got-it | needs-practice | confused</tspan><tspan x="1979" dy="12">Feedback is content-first.</tspan><tspan x="1979" dy="12">Voice signals stay soft.</tspan></text>
+<rect x="1600" y="565" width="190" height="95" fill="#60a5fa" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="590" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e3a5f" text-anchor="middle"><tspan x="1695" dy="0">classifyTutorTurn()</tspan></text>
+<text y="617" font-family="Menlo,Consolas,monospace" font-size="10" fill="#374151" text-anchor="start"><tspan x="1614" dy="0">ask_question</tspan><tspan x="1614" dy="12">answer_check</tspan><tspan x="1614" dy="12">request_summary</tspan><tspan x="1614" dy="12">request_direct_answer</tspan><tspan x="1614" dy="12">practice_concept</tspan><tspan x="1614" dy="12">translate_or_read</tspan><tspan x="1614" dy="12">off_topic</tspan></text>
+<rect x="1815" y="565" width="180" height="95" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="590" font-family="Menlo,Consolas,monospace" font-size="15" fill="#6d28d9" text-anchor="middle"><tspan x="1905" dy="0">prompt.ts</tspan></text>
+<text y="617" font-family="Menlo,Consolas,monospace" font-size="10" fill="#374151" text-anchor="start"><tspan x="1829" dy="0">System prompt:</tspan><tspan x="1829" dy="12">teaching + safety rules</tspan><tspan x="1829" dy="12">User prompt:</tspan><tspan x="1829" dy="12">profile, memory, source,</tspan><tspan x="1829" dy="12">check eval, voice signals</tspan></text>
+<polygon points="2090,565 2155,612.5 2090,660 2025,612.5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+<text y="612" font-family="Menlo,Consolas,monospace" font-size="12" fill="#b45309" text-anchor="middle"><tspan x="2090" dy="0">LLM_PROVIDER</tspan></text>
+<rect x="1600" y="715" width="185" height="95" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="740" font-family="Menlo,Consolas,monospace" font-size="15" fill="#6d28d9" text-anchor="middle"><tspan x="1692.5" dy="0">Anthropic</tspan></text>
+<text y="767.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="1614" dy="0">claude-sonnet-4-6</tspan><tspan x="1614" dy="12.6">strict tool schema</tspan><tspan x="1614" dy="12.6">return_tutor_response</tspan></text>
+<rect x="1815" y="715" width="180" height="95" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="740" font-family="Menlo,Consolas,monospace" font-size="15" fill="#6d28d9" text-anchor="middle"><tspan x="1905" dy="0">Z.ai GLM</tspan></text>
+<text y="767.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="1829" dy="0">OpenAI-compatible</tspan><tspan x="1829" dy="12.6">ZAI_BASE_URL</tspan><tspan x="1829" dy="12.6">JSON mode</tspan></text>
+<rect x="2025" y="700" width="180" height="140" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="725" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="2039" dy="0">TutorResponse</tspan></text>
+<text y="747.2" font-family="Menlo,Consolas,monospace" font-size="9.2" fill="#22c55e" text-anchor="start"><tspan x="2039" dy="0">{</tspan><tspan x="2039" dy="10.855999999999998">  response,</tspan><tspan x="2039" dy="10.855999999999998">  followUpQuestion,</tspan><tspan x="2039" dy="10.855999999999998">  targetConcept,</tspan><tspan x="2039" dy="10.855999999999998">  tutorMove,</tspan><tspan x="2039" dy="10.855999999999998">  understandingLevel,</tspan><tspan x="2039" dy="10.855999999999998">  directAnswerGiven,</tspan><tspan x="2039" dy="10.855999999999998">  confidence,</tspan><tspan x="2039" dy="10.855999999999998">  memoryUpdateCandidates</tspan><tspan x="2039" dy="10.855999999999998">}</tspan></text>
+<path d="M 1485 720 L 1540 720 L 1540 450 L 1545 450" fill="none" stroke="#6d28d9" stroke-width="3" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 1785 452 L 1810 452" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1935 452 L 1965 452" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 2080 515 L 1930 565" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1872 500 L 1695 565" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 1790 612 L 1815 612" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 1995 612 L 2025 612" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2048 660 L 1693 715" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 2073 660 L 1905 715" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 1785 762 L 2025 762" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 1995 762 L 2025 762" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arrow-6d28d9)"/>
+<rect x="2315" y="405" width="185" height="95" fill="#93c5fd" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="430" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e3a5f" text-anchor="middle"><tspan x="2407.5" dy="0">speakText()</tspan></text>
+<text y="457.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="2329" dy="0">assistantText = response + followUpQuestion</tspan><tspan x="2329" dy="12.6">stop previous speech</tspan><tspan x="2329" dy="12.6">set tutorSpeaking</tspan></text>
+<rect x="2525" y="385" width="155" height="95" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="404.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#ffffff" text-anchor="middle"><tspan x="2602.5" dy="0">/api/speech</tspan><tspan x="2602.5" dy="13.125">/synthesize</tspan></text>
+<text y="436.5" font-family="Menlo,Consolas,monospace" font-size="9.5" fill="#ffffff" text-anchor="start"><tspan x="2539" dy="0">MP3/base64</tspan><tspan x="2539" dy="11.4">Google timings</tspan><tspan x="2539" dy="11.4">browser fallback</tspan></text>
+<rect x="2700" y="385" width="155" height="95" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="404.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#ffffff" text-anchor="middle"><tspan x="2777.5" dy="0">/api/speech</tspan><tspan x="2777.5" dy="13.125">/synthesize/stream</tspan></text>
+<text y="436.2" font-family="Menlo,Consolas,monospace" font-size="9.2" fill="#ffffff" text-anchor="start"><tspan x="2714" dy="0">PCM stream</tspan><tspan x="2714" dy="11.04">headers carry provider,</tspan><tspan x="2714" dy="11.04">format, sample rate</tspan></text>
+<polygon points="2577.5,555 2650,602.5 2577.5,650 2505,602.5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+<text y="602" font-family="Menlo,Consolas,monospace" font-size="12" fill="#b45309" text-anchor="middle"><tspan x="2578.5" dy="0">TTS_PROVIDER</tspan></text>
+<rect x="2315" y="705" width="190" height="105" fill="#a7f3d0" stroke="#047857" stroke-width="2" rx="8" ry="8"/>
+<text y="730" font-family="Menlo,Consolas,monospace" font-size="15" fill="#047857" text-anchor="middle"><tspan x="2410" dy="0">Playback paths</tspan></text>
+<text y="757.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="2329" dy="0">HTMLAudioElement.playbackRate</tspan><tspan x="2329" dy="12.6">Web Audio PCM scheduling</tspan><tspan x="2329" dy="12.6">SpeechSynthesisUtterance.rate</tspan><tspan x="2329" dy="12.6">stop voice aborts all</tspan></text>
+<rect x="2535" y="705" width="155" height="105" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="8" ry="8"/>
+<text y="730" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="2612.5" dy="0">Speech trace</tspan></text>
+<text y="757" font-family="Menlo,Consolas,monospace" font-size="10" fill="#374151" text-anchor="start"><tspan x="2549" dy="0">Google timepoints if present</tspan><tspan x="2549" dy="12">else estimated word weights</tspan><tspan x="2549" dy="12">scaled by speed</tspan></text>
+<ellipse cx="2787.5" cy="760" rx="67.5" ry="35" fill="#a7f3d0" stroke="#047857" stroke-width="2"/>
+<text y="759" font-family="Menlo,Consolas,monospace" font-size="11" fill="#047857" text-anchor="middle"><tspan x="2788" dy="0">onSpeechComplete()</tspan></text>
+<path d="M 2205 770 L 2260 770 L 2260 452 L 2315 452" fill="none" stroke="#6d28d9" stroke-width="3" marker-end="url(#arrow-6d28d9)"/>
+<path d="M 2500 442 L 2525 442" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2500 462 L 2700 462" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2602 480 L 2577 555" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2778 480 L 2578 555" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2538 650 L 2410 705" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 2585 650 L 2613 705" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arrow-b45309)"/>
+<path d="M 2505 755 L 2720 755" fill="none" stroke="#047857" stroke-width="2" marker-end="url(#arrow-047857)"/>
+<path d="M 2690 755 L 2720 755" fill="none" stroke="#1e40af" stroke-width="2" marker-end="url(#arrow-1e40af)"/>
+<ellipse cx="207.5" cy="1055" rx="112.5" ry="30" fill="#a7f3d0" stroke="#047857" stroke-width="2"/>
+<text y="1055" font-family="Menlo,Consolas,monospace" font-size="11" fill="#047857" text-anchor="middle"><tspan x="208.5" dy="0">followUpQuestion becomes active check</tspan></text>
+<rect x="355" y="1005" width="190" height="95" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="8" ry="8"/>
+<text y="1030" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="450" dy="0">Learning-check banner</tspan></text>
+<text y="1057.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="369" dy="0">appears only after audio ends</tspan><tspan x="369" dy="12.6">next reply updates progress</tspan><tspan x="369" dy="12.6">skip deletes persisted check</tspan></text>
+<rect x="580" y="1005" width="215" height="95" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="1030" font-family="Menlo,Consolas,monospace" font-size="15" fill="#ffffff" text-anchor="middle"><tspan x="687.5" dy="0">Scored status</tspan></text>
+<text y="1057.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#ffffff" text-anchor="start"><tspan x="594" dy="0">got-it -&gt; 24h check review</tspan><tspan x="594" dy="12.6">needs-practice -&gt; 60m</tspan><tspan x="594" dy="12.6">confused -&gt; 10m</tspan></text>
+<rect x="95" y="1150" width="320" height="150" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1175" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="109" dy="0">Concept mastery math</tspan></text>
+<text y="1199" font-family="Menlo,Consolas,monospace" font-size="11" fill="#22c55e" text-anchor="start"><tspan x="109" dy="0">observed:</tspan><tspan x="109" dy="12.979999999999999">got-it = 0.82</tspan><tspan x="109" dy="12.979999999999999">needs-practice = 0.48</tspan><tspan x="109" dy="12.979999999999999">confused = 0.18</tspan><tspan x="109" dy="12.979999999999999"></tspan><tspan x="109" dy="12.979999999999999">masteryScore =</tspan><tspan x="109" dy="12.979999999999999">previous * 0.62 + observed * 0.38</tspan></text>
+<rect x="450" y="1150" width="345" height="150" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1175" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="464" dy="0">Persisted progress rows</tspan></text>
+<text y="1198.8" font-family="Menlo,Consolas,monospace" font-size="10.8" fill="#22c55e" text-anchor="start"><tspan x="464" dy="0">learning_checks:</tspan><tspan x="464" dy="12.744">question, answer, status, feedback,</tspan><tspan x="464" dy="12.744">confidence, next_review_at</tspan><tspan x="464" dy="12.744"></tspan><tspan x="464" dy="12.744">concept_mastery:</tspan><tspan x="464" dy="12.744">attempts, correct_count,</tspan><tspan x="464" dy="12.744">mastery_score, last_status</tspan></text>
+<rect x="95" y="1335" width="700" height="95" fill="#a7f3d0" stroke="#047857" stroke-width="2" rx="8" ry="8"/>
+<text y="1360" font-family="Menlo,Consolas,monospace" font-size="15" fill="#047857" text-anchor="middle"><tspan x="445" dy="0">Tutor memory update</tspan></text>
+<text y="1387.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="109" dy="0">updateSessionMemory() records latest learner turn, tutor move, focus concept,</tspan><tspan x="109" dy="12.6">strengths, misconceptions, open questions, and last effective strategy.</tspan><tspan x="109" dy="12.6">saveStoredSessionMemory() persists when sessionId exists.</tspan></text>
+<path d="M 2787 795 L 2787 905 L 67 905 L 67 1055 L 95 1055" fill="none" stroke="#047857" stroke-width="3" marker-end="url(#arrow-047857)"/>
+<path d="M 320 1055 L 355 1055" fill="none" stroke="#047857" stroke-width="2" marker-end="url(#arrow-047857)"/>
+<path d="M 545 1055 L 580 1055" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 688 1100 L 258 1150" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 688 1100 L 623 1150" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 795 1382 L 875 1382 L 875 1132 L 930 1132" fill="none" stroke="#047857" stroke-width="2" stroke-dasharray="12 9" marker-end="url(#arrow-047857)"/>
+<rect x="930" y="1010" width="330" height="205" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1035" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="944" dy="0">TutorRequest convergence</tspan></text>
+<text y="1058" font-family="Menlo,Consolas,monospace" font-size="10" fill="#22c55e" text-anchor="start"><tspan x="944" dy="0">{</tspan><tspan x="944" dy="11.799999999999999">  learningContext,</tspan><tspan x="944" dy="11.799999999999999">  messages: last 8,</tspan><tspan x="944" dy="11.799999999999999">  userMessage: transcript,</tspan><tspan x="944" dy="11.799999999999999">  targetLanguage,</tspan><tspan x="944" dy="11.799999999999999">  sourceLanguage,</tspan><tspan x="944" dy="11.799999999999999">  understandingLevel,</tspan><tspan x="944" dy="11.799999999999999">  allowDirectAnswer,</tspan><tspan x="944" dy="11.799999999999999">  sessionMemory,</tspan><tspan x="944" dy="11.799999999999999">  learnerProfile,</tspan><tspan x="944" dy="11.799999999999999">  activeLearningCheck?,</tspan><tspan x="944" dy="11.799999999999999">  learningCheckEvaluation?,</tspan><tspan x="944" dy="11.799999999999999">  voiceInteractionSignals?</tspan><tspan x="944" dy="11.799999999999999">}</tspan></text>
+<rect x="1295" y="1010" width="260" height="150" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1035" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="1309" dy="0">Evaluation result</tspan></text>
+<text y="1058" font-family="Menlo,Consolas,monospace" font-size="10" fill="#22c55e" text-anchor="start"><tspan x="1309" dy="0">{</tspan><tspan x="1309" dy="11.799999999999999">  status:</tspan><tspan x="1309" dy="11.799999999999999">    &quot;got-it&quot; |</tspan><tspan x="1309" dy="11.799999999999999">    &quot;needs-practice&quot; |</tspan><tspan x="1309" dy="11.799999999999999">    &quot;confused&quot;,</tspan><tspan x="1309" dy="11.799999999999999">  concept,</tspan><tspan x="1309" dy="11.799999999999999">  feedback,</tspan><tspan x="1309" dy="11.799999999999999">  confidence,</tspan><tspan x="1309" dy="11.799999999999999">  provider</tspan><tspan x="1309" dy="11.799999999999999">}</tspan></text>
+<rect x="1595" y="1010" width="260" height="150" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1035" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="1609" dy="0">TTS response</tspan></text>
+<text y="1058" font-family="Menlo,Consolas,monospace" font-size="10" fill="#22c55e" text-anchor="start"><tspan x="1609" dy="0">{</tspan><tspan x="1609" dy="11.799999999999999">  audioBase64?,</tspan><tspan x="1609" dy="11.799999999999999">  format: &quot;mp3&quot; | null,</tspan><tspan x="1609" dy="11.799999999999999">  provider,</tspan><tspan x="1609" dy="11.799999999999999">  voice,</tspan><tspan x="1609" dy="11.799999999999999">  fallback,</tspan><tspan x="1609" dy="11.799999999999999">  timings: []</tspan><tspan x="1609" dy="11.799999999999999">}</tspan><tspan x="1609" dy="11.799999999999999"></tspan><tspan x="1609" dy="11.799999999999999">stream headers:</tspan><tspan x="1609" dy="11.799999999999999">X-TTS-Sample-Rate</tspan></text>
+<rect x="930" y="1255" width="350" height="170" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1280" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="944" dy="0">Runtime env switches</tspan></text>
+<text y="1303" font-family="Menlo,Consolas,monospace" font-size="10" fill="#22c55e" text-anchor="start"><tspan x="944" dy="0">LLM_PROVIDER: &quot;anthropic&quot; | &quot;zai&quot;</tspan><tspan x="944" dy="11.799999999999999">ANTHROPIC_MODEL: claude-sonnet-4-6</tspan><tspan x="944" dy="11.799999999999999">ZAI_MODEL: glm-4.6</tspan><tspan x="944" dy="11.799999999999999">OPENAI_STT_MODEL: gpt-4o-transcribe</tspan><tspan x="944" dy="11.799999999999999">TTS_PROVIDER: &quot;browser&quot; | &quot;openai&quot; | &quot;google&quot;</tspan><tspan x="944" dy="11.799999999999999">OPENAI_TTS_MODEL: gpt-4o-mini-tts</tspan><tspan x="944" dy="11.799999999999999">SMART_TURN_MODE: &quot;auto&quot; | &quot;off&quot;</tspan><tspan x="944" dy="11.799999999999999">SMART_TURN_TIMEOUT_MS: 20000</tspan></text>
+<rect x="1325" y="1245" width="315" height="180" fill="#fee2e2" stroke="#dc2626" stroke-width="2" rx="8" ry="8"/>
+<text y="1270" font-family="Menlo,Consolas,monospace" font-size="15" fill="#dc2626" text-anchor="middle"><tspan x="1482.5" dy="0">Fallback discipline</tspan></text>
+<text y="1297.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="1339" dy="0">Smart Turn unavailable -&gt; duration fallback</tspan><tspan x="1339" dy="12.6">SMART_TURN_MODE=off -&gt; complete immediately</tspan><tspan x="1339" dy="12.6">TTS provider browser -&gt; no server audio</tspan><tspan x="1339" dy="12.6">Speech synthesis failure -&gt; reveal text + browser speech</tspan><tspan x="1339" dy="12.6">Missing Supabase -&gt; progress remains local</tspan></text>
+<rect x="1680" y="1245" width="385" height="180" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text y="1270" font-family="Menlo,Consolas,monospace" font-size="15" fill="#6d28d9" text-anchor="middle"><tspan x="1872.5" dy="0">Model-stateless tutor</tspan></text>
+<text y="1297.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="1694" dy="0">The LLM does not own continuity.</tspan><tspan x="1694" dy="12.6">Each turn sends layered context:</tspan><tspan x="1694" dy="12.6">selected LearningContext,</tspan><tspan x="1694" dy="12.6">recent messages, sessionMemory,</tspan><tspan x="1694" dy="12.6">learnerProfile, active check/evaluation,</tspan><tspan x="1694" dy="12.6">and voice signals.</tspan><tspan x="1694" dy="12.6">Source material is explicitly untrusted.</tspan></text>
+<rect x="2190" y="1010" width="225" height="120" fill="#dbeafe" stroke="#1e40af" stroke-width="2" rx="8" ry="8"/>
+<text y="1035" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e40af" text-anchor="middle"><tspan x="2302.5" dy="0">ConversationPanel</tspan></text>
+<text y="1063" font-family="Menlo,Consolas,monospace" font-size="11" fill="#374151" text-anchor="start"><tspan x="2204" dy="0">message log</tspan><tspan x="2204" dy="13.2">quick actions</tspan><tspan x="2204" dy="13.2">active check banner</tspan><tspan x="2204" dy="13.2">copy/edit controls</tspan><tspan x="2204" dy="13.2">Replay / Stop voice</tspan></text>
+<rect x="2450" y="1010" width="220" height="120" fill="#93c5fd" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text y="1035" font-family="Menlo,Consolas,monospace" font-size="15" fill="#1e3a5f" text-anchor="middle"><tspan x="2560" dy="0">page.tsx orchestration</tspan></text>
+<text y="1063" font-family="Menlo,Consolas,monospace" font-size="11" fill="#374151" text-anchor="start"><tspan x="2464" dy="0">busy/status/error</tspan><tspan x="2464" dy="13.2">tutorSpeaking</tspan><tspan x="2464" dy="13.2">speechTrace</tspan><tspan x="2464" dy="13.2">activeLearningCheck</tspan><tspan x="2464" dy="13.2">understandingLevel</tspan><tspan x="2464" dy="13.2">sessionMemory</tspan></text>
+<rect x="2190" y="1175" width="225" height="95" fill="#fee2e2" stroke="#dc2626" stroke-width="2" rx="8" ry="8"/>
+<text y="1200" font-family="Menlo,Consolas,monospace" font-size="15" fill="#dc2626" text-anchor="middle"><tspan x="2302.5" dy="0">Stop controls</tspan></text>
+<text y="1227.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="2204" dy="0">tutorAbortRef aborts LLM request</tspan><tspan x="2204" dy="12.6">ttsAbortRef aborts TTS</tspan><tspan x="2204" dy="12.6">stopTutorSpeech() closes audio objects</tspan></text>
+<rect x="2450" y="1175" width="220" height="95" fill="#a7f3d0" stroke="#047857" stroke-width="2" rx="8" ry="8"/>
+<text y="1200" font-family="Menlo,Consolas,monospace" font-size="15" fill="#047857" text-anchor="middle"><tspan x="2560" dy="0">Reveal discipline</tspan></text>
+<text y="1227.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#374151" text-anchor="start"><tspan x="2464" dy="0">assistant text is revealed when audio is ready</tspan><tspan x="2464" dy="12.6">or immediately if speech fails</tspan><tspan x="2464" dy="12.6">check waits for completion</tspan></text>
+<rect x="2190" y="1310" width="480" height="115" fill="#1e293b" stroke="#1e293b" stroke-width="1" rx="8" ry="8"/>
+<text y="1335" font-family="Menlo,Consolas,monospace" font-size="13" fill="#ffffff" text-anchor="start"><tspan x="2204" dy="0">Voice tutor route catalog</tspan></text>
+<text y="1358.5" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#22c55e" text-anchor="start"><tspan x="2204" dy="0">POST /api/speech/turn</tspan><tspan x="2204" dy="12.389999999999999">POST /api/speech/transcribe</tspan><tspan x="2204" dy="12.389999999999999">POST /api/tutor/evaluate</tspan><tspan x="2204" dy="12.389999999999999">POST /api/tutor/respond</tspan><tspan x="2204" dy="12.389999999999999">POST /api/speech/synthesize</tspan><tspan x="2204" dy="12.389999999999999">POST /api/speech/synthesize/stream</tspan><tspan x="2204" dy="12.389999999999999">POST,DELETE /api/progress/checks</tspan></text>
+<path d="M 2415 1070 L 2450 1070" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arrow-1e3a5f)"/>
+<path d="M 2555 1130 L 2300 1175" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-dc2626)"/>
+<path d="M 2560 1130 L 2560 1175" fill="none" stroke="#047857" stroke-width="2" marker-end="url(#arrow-047857)"/>
+</svg>

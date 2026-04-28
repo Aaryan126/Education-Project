@@ -3,6 +3,7 @@
 import { CircleHelp, Lightbulb, List, Lock, Send, Sparkles, Square, Volume2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
+import { getSpeechTraceParts } from "@/lib/speech/trace";
 import type { ConversationMessage, UnderstandingLevel } from "@/lib/tutor/types";
 
 type ConversationPanelProps = {
@@ -40,27 +41,7 @@ const UNDERSTANDING_LABELS: Record<UnderstandingLevel, string> = {
   high: "Confident"
 };
 
-const SPEECH_TRACE_FORWARD_WORDS = 3;
-
-type BrowserSegment = {
-  segment: string;
-  index: number;
-  isWordLike?: boolean;
-};
-
-type BrowserSegmenter = {
-  segment(input: string): Iterable<BrowserSegment>;
-};
-
-type BrowserSegmenterConstructor = new (
-  locales?: string | string[],
-  options?: { granularity?: "word" | "sentence" | "grapheme" }
-) => BrowserSegmenter;
-
-type TracePart = {
-  text: string;
-  wordIndex: number | null;
-};
+const SPEECH_TRACE_FORWARD_WORDS = 0;
 
 export function ConversationPanel({
   messages,
@@ -276,7 +257,7 @@ function MessageContent({
     return <>{message.content}</>;
   }
 
-  const parts = getTraceParts(message.content);
+  const parts = getSpeechTraceParts(message.content);
   const currentPhraseStart = speechTrace.wordIndex;
   const currentPhraseEnd = Math.min(speechTrace.totalWords - 1, currentPhraseStart + SPEECH_TRACE_FORWARD_WORDS);
 
@@ -302,43 +283,4 @@ function MessageContent({
       })}
     </span>
   );
-}
-
-function getTraceParts(text: string): TracePart[] {
-  const Segmenter = (Intl as typeof Intl & { Segmenter?: BrowserSegmenterConstructor }).Segmenter;
-
-  if (Segmenter) {
-    const segmenter = new Segmenter(undefined, { granularity: "word" });
-    let wordIndex = 0;
-
-    return Array.from(segmenter.segment(text), (part) => {
-      if (!isTraceableSegment(part.segment, part.isWordLike)) {
-        return { text: part.segment, wordIndex: null };
-      }
-
-      const nextPart = { text: part.segment, wordIndex };
-      wordIndex += 1;
-      return nextPart;
-    });
-  }
-
-  let wordIndex = 0;
-
-  return (text.match(/\s+|\S+/g) ?? [text]).map((part) => {
-    if (/^\s+$/.test(part)) {
-      return { text: part, wordIndex: null };
-    }
-
-    const nextPart = { text: part, wordIndex };
-    wordIndex += 1;
-    return nextPart;
-  });
-}
-
-function isTraceableSegment(segment: string, isWordLike?: boolean) {
-  if (isWordLike) {
-    return true;
-  }
-
-  return /\S/.test(segment) && /[\p{L}\p{N}]/u.test(segment);
 }

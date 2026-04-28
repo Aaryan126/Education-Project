@@ -31,6 +31,15 @@ import { CameraCapture, type CapturedInput } from "@/components/CameraCapture";
 import { ConversationPanel } from "@/components/ConversationPanel";
 import type { SpeechTraceState } from "@/components/ConversationPanel";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
+import {
+  buildSpeechTraceWordEndTimesMs,
+  getSpeechTraceWordIndex,
+  getSpeechTraceWordIndexAtChar,
+  getSpeechTraceWordIndexFromStartTimes,
+  getSpeechTraceWordWeights,
+  getSpeechTraceWords,
+  type SpeechTimingPoint
+} from "@/lib/speech/trace";
 import type { ConversationMessage, LearningContext, TutorResponse, UnderstandingLevel } from "@/lib/tutor/types";
 
 // Re-exported for use by StepIndicator
@@ -235,6 +244,7 @@ export default function Home() {
     durationMs: number;
     wordWeights: number[];
     wordEndTimesMs: number[];
+    wordStartTimesMs: number[] | null;
   } | null>(null);
 
   // --- Session phase ---
@@ -769,7 +779,7 @@ export default function Home() {
   function startSpeechTrace(
     messageId: string | undefined,
     text: string,
-    options?: { durationMs?: number; startedAt?: number }
+    options?: { durationMs?: number; startedAt?: number; timings?: SpeechTimingPoint[]; manual?: boolean }
   ) {
     if (!messageId) {
       return;
@@ -785,6 +795,7 @@ export default function Home() {
 
     const durationMs = options?.durationMs ?? estimateSpeechTraceDurationMs(text);
     const wordWeights = getSpeechTraceWordWeights(text, words);
+    const wordStartTimesMs = buildSpeechTraceWordStartTimesMs(options?.timings, totalWords);
 
     speechTraceSessionRef.current = {
       messageId,
@@ -792,9 +803,14 @@ export default function Home() {
       startedAt: options?.startedAt ?? performance.now(),
       durationMs,
       wordWeights,
-      wordEndTimesMs: buildSpeechTraceWordEndTimesMs(wordWeights, durationMs)
+      wordEndTimesMs: buildSpeechTraceWordEndTimesMs(wordWeights, durationMs),
+      wordStartTimesMs
     };
     setSpeechTrace({ messageId, wordIndex: 0, totalWords });
+
+    if (options?.manual) {
+      return;
+    }
 
     const tick = () => {
       const session = speechTraceSessionRef.current;
@@ -804,18 +820,20 @@ export default function Home() {
       }
 
       const elapsedMs = performance.now() - session.startedAt;
-      const wordIndex = getSpeechTraceWordIndex(session.wordEndTimesMs, elapsedMs);
+      const wordIndex = session.wordStartTimesMs
+        ? getSpeechTraceWordIndexFromStartTimes(session.wordStartTimesMs, elapsedMs, session.totalWords)
+        : getSpeechTraceWordIndex(session.wordEndTimesMs, elapsedMs);
       setSpeechTrace({ messageId: session.messageId, wordIndex, totalWords: session.totalWords });
     };
 
     tick();
-    speechTraceTimerRef.current = window.setInterval(tick, 90);
+    speechTraceTimerRef.current = window.setInterval(tick, wordStartTimesMs ? 40 : 90);
   }
 
   function updateSpeechTraceDuration(durationMs: number) {
     const session = speechTraceSessionRef.current;
 
-    if (!session || !Number.isFinite(durationMs) || durationMs <= 0) {
+    if (!session || session.wordStartTimesMs || !Number.isFinite(durationMs) || durationMs <= 0) {
       return;
     }
 
@@ -891,17 +909,11 @@ export default function Home() {
     };
 
     try {
-      const streamed = await speakWithStreamingTts(text, controller, reveal, options?.traceMessageId);
-
-      if (streamed) {
-        return true;
-      }
-
       const response = await fetch("/api/speech/synthesize", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "audio/mpeg, application/json"
+          Accept: "application/json"
         },
         signal: controller.signal,
         body: JSON.stringify({ text, voice: ttsVoiceStyle })
@@ -911,63 +923,12 @@ export default function Home() {
         await readJsonResponse(response);
       }
 
-      const contentType = response.headers.get("content-type") ?? "";
-
-      if (contentType.startsWith("audio/")) {
-        const audioBlob = await response.blob();
-
-        if (controller.signal.aborted) {
-          setTutorSpeaking(false);
-          return false;
-        }
-
-        reveal();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.preload = "auto";
-        activeAudioUrlRef.current = audioUrl;
-        activeAudioRef.current = audio;
-
-        const clearAudio = () => {
-          if (activeAudioRef.current === audio) {
-            activeAudioRef.current = null;
-          }
-
-          if (activeAudioUrlRef.current === audioUrl) {
-            URL.revokeObjectURL(audioUrl);
-            activeAudioUrlRef.current = null;
-          }
-        };
-
-        audio.addEventListener("ended", () => {
-          clearAudio();
-          clearSpeechTrace();
-          setTutorSpeaking(false);
-          setStatus("Speech finished");
-        });
-        audio.addEventListener("error", () => {
-          clearAudio();
-          clearSpeechTrace();
-          setTutorSpeaking(false);
-          setStatus("Speech playback failed");
-        });
-        audio.addEventListener("durationchange", () => {
-          updateSpeechTraceDuration(getFiniteAudioDurationMs(audio) ?? estimateSpeechTraceDurationMs(text));
-        });
-        await audio.play();
-        startSpeechTrace(options?.traceMessageId, text, {
-          durationMs: getFiniteAudioDurationMs(audio),
-          startedAt: performance.now()
-        });
-        setStatus("Playing audio");
-        return true;
-      }
-
       const result = await readJsonResponse<{
         audioBase64: string | null;
         format: "mp3" | null;
         provider: "openai" | "google" | "browser";
         fallback: "none" | "browser";
+        timings?: SpeechTimingPoint[];
         usage?: TtsUsageResponse;
       }>(response);
 
@@ -1006,9 +967,16 @@ export default function Home() {
         await audio.play();
         startSpeechTrace(options?.traceMessageId, text, {
           durationMs: getFiniteAudioDurationMs(audio),
-          startedAt: performance.now()
+          startedAt: performance.now(),
+          timings: result.timings
         });
-        setStatus("Playing audio");
+        setStatus(result.timings?.length ? "Playing synced audio" : "Playing audio");
+        return true;
+      }
+
+      const streamed = await speakWithStreamingTts(text, controller, reveal, options?.traceMessageId);
+
+      if (streamed) {
         return true;
       }
 
@@ -1206,7 +1174,7 @@ export default function Home() {
     utterance.lang = targetLanguage;
     utterance.rate = 0.92;
     utterance.pitch = ttsVoiceStyle === "female" ? 1.05 : 0.94;
-    startSpeechTrace(traceMessageId, text);
+    startSpeechTrace(traceMessageId, text, { manual: true });
     utterance.onboundary = (event) => {
       const wordIndex = getSpeechTraceWordIndexAtChar(text, event.charIndex);
 
@@ -1776,27 +1744,6 @@ export default function Home() {
 
 type BrowserAudioContextConstructor = typeof AudioContext;
 
-type SpeechTraceWord = {
-  text: string;
-  startIndex: number;
-  endIndex: number;
-};
-
-type BrowserSegment = {
-  segment: string;
-  index: number;
-  isWordLike?: boolean;
-};
-
-type BrowserSegmenter = {
-  segment(input: string): Iterable<BrowserSegment>;
-};
-
-type BrowserSegmenterConstructor = new (
-  locales?: string | string[],
-  options?: { granularity?: "word" | "sentence" | "grapheme" }
-) => BrowserSegmenter;
-
 function getAudioContextConstructor(): BrowserAudioContextConstructor | null {
   return window.AudioContext || (window as Window & { webkitAudioContext?: BrowserAudioContextConstructor }).webkitAudioContext || null;
 }
@@ -1855,117 +1802,25 @@ function estimateSpeechTraceDurationMs(text: string) {
   return Math.max(900, (wordCount / wordsPerMinute) * 60_000);
 }
 
-function getSpeechTraceWords(text: string): SpeechTraceWord[] {
-  const Segmenter = (Intl as typeof Intl & { Segmenter?: BrowserSegmenterConstructor }).Segmenter;
-
-  if (Segmenter) {
-    const segmenter = new Segmenter(undefined, { granularity: "word" });
-
-    return Array.from(segmenter.segment(text))
-      .filter((part) => isTraceableSpeechSegment(part.segment, part.isWordLike))
-      .map((part) => ({
-        text: part.segment,
-        startIndex: part.index,
-        endIndex: part.index + part.segment.length
-      }));
-  }
-
-  const words = Array.from(text.matchAll(/[\p{L}\p{N}]+(?:['-][\p{L}\p{N}]+)*/gu), (match) => {
-    const startIndex = match.index ?? 0;
-
-    return {
-      text: match[0],
-      startIndex,
-      endIndex: startIndex + match[0].length
-    };
-  });
-
-  if (words.length > 0) {
-    return words;
-  }
-
-  return Array.from(text.matchAll(/\S+/g), (match) => {
-    const startIndex = match.index ?? 0;
-
-    return {
-      text: match[0],
-      startIndex,
-      endIndex: startIndex + match[0].length
-    };
-  });
-}
-
-function isTraceableSpeechSegment(segment: string, isWordLike?: boolean) {
-  if (isWordLike) {
-    return true;
-  }
-
-  return /\S/.test(segment) && /[\p{L}\p{N}]/u.test(segment);
-}
-
-function getSpeechTraceWordWeights(text: string, words: SpeechTraceWord[]) {
-  return words.map((word, index) => {
-    const spokenLength = Math.max(1, Array.from(word.text.replace(/[^\p{L}\p{N}]/gu, "") || word.text).length);
-    const separator = text.slice(word.endIndex, words[index + 1]?.startIndex ?? text.length);
-    let weight = 0.72 + Math.min(2.6, spokenLength * 0.18);
-
-    if (/[.!?]/.test(separator)) {
-      weight += 0.55;
-    } else if (/\p{P}/u.test(separator)) {
-      weight += 0.28;
-    }
-
-    if (index === words.length - 1) {
-      weight += 0.18;
-    }
-
-    return weight;
-  });
-}
-
-function buildSpeechTraceWordEndTimesMs(wordWeights: number[], durationMs: number) {
-  const safeDurationMs = Math.max(durationMs, 500);
-  const totalWeight = wordWeights.reduce((total, weight) => total + weight, 0) || 1;
-  let elapsedMs = 0;
-
-  return wordWeights.map((weight) => {
-    elapsedMs += (weight / totalWeight) * safeDurationMs;
-    return elapsedMs;
-  });
-}
-
-function getSpeechTraceWordIndex(wordEndTimesMs: number[], elapsedMs: number) {
-  if (wordEndTimesMs.length === 0 || elapsedMs <= 0) {
-    return 0;
-  }
-
-  const nextIndex = wordEndTimesMs.findIndex((endTimeMs) => elapsedMs < endTimeMs);
-  return nextIndex === -1 ? wordEndTimesMs.length - 1 : nextIndex;
-}
-
-function getSpeechTraceWordIndexAtChar(text: string, charIndex: number) {
-  if (!Number.isFinite(charIndex)) {
+function buildSpeechTraceWordStartTimesMs(timings: SpeechTimingPoint[] | undefined, totalWords: number) {
+  if (!timings || timings.length === 0) {
     return null;
   }
 
-  const words = getSpeechTraceWords(text);
-  const nextIndex = words.findIndex((word) => charIndex >= word.startIndex && charIndex < word.endIndex);
+  const wordStartTimesMs = new Array<number>(totalWords);
 
-  if (nextIndex !== -1) {
-    return nextIndex;
-  }
-
-  let previousIndex: number | null = null;
-
-  for (let index = 0; index < words.length; index += 1) {
-    if (words[index].startIndex > charIndex) {
-      break;
+  timings.forEach((timing) => {
+    if (
+      Number.isInteger(timing.wordIndex) &&
+      timing.wordIndex >= 0 &&
+      timing.wordIndex < totalWords &&
+      Number.isFinite(timing.timeMs)
+    ) {
+      wordStartTimesMs[timing.wordIndex] = Math.max(0, timing.timeMs);
     }
+  });
 
-    previousIndex = index;
-  }
-
-  return previousIndex;
+  return wordStartTimesMs.some((timeMs) => Number.isFinite(timeMs)) ? wordStartTimesMs : null;
 }
 
 function getFiniteAudioDurationMs(audio: HTMLAudioElement) {

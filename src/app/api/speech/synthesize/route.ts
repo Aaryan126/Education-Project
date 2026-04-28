@@ -36,7 +36,8 @@ export async function POST(request: Request) {
       format: result.format,
       provider: result.provider,
       voice: result.voice,
-      fallback: result.fallback
+      fallback: result.fallback,
+      timings: result.timings ?? []
     };
 
     return jsonOk(responseResult);

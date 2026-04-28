@@ -1,6 +1,7 @@
 import OpenAI from "openai";
-import { TextToSpeechClient } from "@google-cloud/text-to-speech";
+import { v1beta1 as textToSpeech } from "@google-cloud/text-to-speech";
 import { getEnv, requireOpenAIKey } from "@/lib/env";
+import { getSpeechTraceWords, type SpeechTimingPoint } from "@/lib/speech/trace";
 import { clampTtsInput, countTtsCharacters } from "@/lib/speech/usage";
 
 const GOOGLE_TTS_STYLE_VOICES = {
@@ -20,6 +21,7 @@ export type SpeechSynthesisResult = {
   provider: "openai" | "google" | "browser";
   voice: string;
   fallback: "none" | "browser";
+  timings?: SpeechTimingPoint[];
   usageCharacters?: number;
 };
 
@@ -36,7 +38,7 @@ export type StreamingSpeechResult = {
 let googleTtsClientCache:
   | {
       key: string;
-      client: TextToSpeechClient;
+      client: textToSpeech.TextToSpeechClient;
     }
   | undefined;
 
@@ -83,6 +85,7 @@ export async function streamSpeech(text: string, requestedVoice?: string): Promi
 
 async function synthesizeWithOpenAI(text: string, requestedVoice?: string): Promise<SpeechSynthesisResult> {
   const env = getEnv();
+  const inputText = clampTtsInput(text);
   const voice = resolveOpenAiVoice(env.OPENAI_TTS_VOICE, requestedVoice);
 
   const client = new OpenAI({
@@ -92,7 +95,7 @@ async function synthesizeWithOpenAI(text: string, requestedVoice?: string): Prom
   const speech = await client.audio.speech.create({
     model: env.OPENAI_TTS_MODEL,
     voice,
-    input: clampTtsInput(text),
+    input: inputText,
     response_format: "mp3",
     speed: 0.95,
     instructions: getVoiceInstructions(requestedVoice)
@@ -147,17 +150,41 @@ async function synthesizeWithGoogle(text: string, requestedVoice?: string): Prom
   const inputText = clampTtsInput(text);
   const client = getGoogleTtsClient();
   const voice = resolveGoogleVoice(env.GOOGLE_TTS_VOICE, requestedVoice);
+  const markedInput = buildSsmlWordMarks(inputText);
 
-  const [response] = await client.synthesizeSpeech({
-    input: { text: inputText },
-    voice: {
-      languageCode: env.GOOGLE_TTS_LANGUAGE_CODE,
-      name: voice
-    },
-    audioConfig: {
-      audioEncoding: "MP3"
+  let response: {
+    audioContent?: Uint8Array | Buffer | string | null;
+    timepoints?: Array<{ markName?: string | null; timeSeconds?: number | null }> | null;
+  };
+
+  try {
+    [response] = await client.synthesizeSpeech({
+      input: markedInput.ssml ? { ssml: markedInput.ssml } : { text: inputText },
+      voice: {
+        languageCode: env.GOOGLE_TTS_LANGUAGE_CODE,
+        name: voice
+      },
+      audioConfig: {
+        audioEncoding: "MP3"
+      },
+      ...(markedInput.ssml ? { enableTimePointing: [1] } : {})
+    });
+  } catch (error) {
+    if (!markedInput.ssml) {
+      throw error;
     }
-  });
+
+    [response] = await client.synthesizeSpeech({
+      input: { text: inputText },
+      voice: {
+        languageCode: env.GOOGLE_TTS_LANGUAGE_CODE,
+        name: voice
+      },
+      audioConfig: {
+        audioEncoding: "MP3"
+      }
+    });
+  }
 
   if (!response.audioContent) {
     throw new Error("Google Text-to-Speech returned no audio content.");
@@ -167,6 +194,7 @@ async function synthesizeWithGoogle(text: string, requestedVoice?: string): Prom
     typeof response.audioContent === "string"
       ? Buffer.from(response.audioContent, "base64")
       : Buffer.from(response.audioContent);
+  const timings = getGoogleSpeechTimings(response.timepoints);
 
   return {
     audioBuffer,
@@ -174,6 +202,7 @@ async function synthesizeWithGoogle(text: string, requestedVoice?: string): Prom
     provider: "google",
     voice,
     fallback: "none",
+    timings,
     usageCharacters: countTtsCharacters(inputText)
   };
 }
@@ -258,7 +287,7 @@ function getGoogleTtsClient() {
     return googleTtsClientCache.client;
   }
 
-  const client = new TextToSpeechClient({
+  const client = new textToSpeech.TextToSpeechClient({
     ...(env.GOOGLE_TTS_API_ENDPOINT ? { apiEndpoint: env.GOOGLE_TTS_API_ENDPOINT } : {}),
     ...(projectId ? { projectId } : {}),
     ...(credentialsJson
@@ -274,6 +303,68 @@ function getGoogleTtsClient() {
   googleTtsClientCache = { key: cacheKey, client };
 
   return client;
+}
+
+function buildSsmlWordMarks(text: string) {
+  const words = getSpeechTraceWords(text);
+
+  if (words.length === 0) {
+    return { ssml: null };
+  }
+
+  let cursor = 0;
+  let ssmlBody = "";
+
+  words.forEach((word, index) => {
+    ssmlBody += escapeSsmlText(text.slice(cursor, word.startIndex));
+    ssmlBody += `<mark name="w${index}"/>`;
+    ssmlBody += escapeSsmlText(text.slice(word.startIndex, word.endIndex));
+    cursor = word.endIndex;
+  });
+
+  ssmlBody += escapeSsmlText(text.slice(cursor));
+
+  const ssml = `<speak>${ssmlBody}</speak>`;
+
+  if (Buffer.byteLength(ssml, "utf8") > 4800) {
+    return { ssml: null };
+  }
+
+  return { ssml };
+}
+
+function escapeSsmlText(text: string) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function getGoogleSpeechTimings(
+  timepoints?: Array<{ markName?: string | null; timeSeconds?: number | null }> | null
+): SpeechTimingPoint[] {
+  if (!timepoints) {
+    return [];
+  }
+
+  return timepoints
+    .map((timepoint) => {
+      const match = /^w(\d+)$/.exec(timepoint.markName ?? "");
+      const timeSeconds = timepoint.timeSeconds;
+
+      if (!match || typeof timeSeconds !== "number" || !Number.isFinite(timeSeconds)) {
+        return null;
+      }
+
+      return {
+        wordIndex: Number(match[1]),
+        timeMs: Math.max(0, timeSeconds * 1000)
+      };
+    })
+    .filter((timing): timing is SpeechTimingPoint => timing !== null)
+    .sort((left, right) => left.wordIndex - right.wordIndex);
 }
 
 function resolveGoogleVoice(defaultVoice: string, requestedVoice?: string) {

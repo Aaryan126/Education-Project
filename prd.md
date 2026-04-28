@@ -128,6 +128,13 @@ Two extraction paths:
 - Analyzes PCM audio to determine if the user has finished speaking
 - Configurable via `SMART_TURN_MODE` env var (auto/off)
 
+#### Voice Interaction Signals
+- Hands-free voice turns attach lightweight metadata after transcription, including Smart Turn completion probability/source, incomplete pause count, speech segment count, long-silence fallback, answer audio duration, short/numeric answer flags, and transcript uncertainty markers
+- Signals are passed into `/api/tutor/evaluate` and `/api/tutor/respond` as soft coaching context
+- Signals do not determine correctness by themselves; pauses, short audio, and short transcripts must not lower scores without answer-content evidence
+- One-word or numeric answers can be fully correct when the question asks for a fact, count, label, or value
+- In development, submitted voice turns log `[Phloem voice signals]` in the browser console for verification
+
 ### 5.4 Guided Tutor Engine (Socratic-Inspired) (`/api/tutor/respond`)
 
 **Behavior rules (encoded in system prompt):**
@@ -463,6 +470,7 @@ Both providers share:
 - [x] Hands-free VAD voice recording (`@ricky0123/vad-web`, 16 kHz mono speech segments)
 - [x] VAD auto-detection of speech start/end
 - [x] Optional smart turn analysis (Python subprocess)
+- [x] Voice interaction signals for pause/hesitation-aware tutor scaffolding
 - [x] Speech-to-text transcription from client-generated WAV audio (OpenAI Whisper/GPT-4o-transcribe)
 - [x] Three-tier TTS (Google > OpenAI > browser fallback)
 - [x] Streaming PCM audio playback (Web Audio API)
@@ -605,7 +613,7 @@ All behavior is configurable via environment variables (validated by Zod schema 
 - [ ] **Rate limiting & cost controls** -- Prevent abuse of paid API calls
 
 ### Medium-term
-- [ ] **Emotion detection from voice** -- Tone/sentiment analysis on audio input
+- [ ] **Emotion detection from voice** -- Tone/sentiment analysis on audio input. Current voice interaction signals cover pause/hesitation cues only and intentionally avoid inferring emotion.
 - [ ] **Personalized learning profiles** -- Per-user preferences and history
 - [ ] **PWA / offline mode** -- Service worker, installable app, cached sample content
 - [ ] **Video-based learning** -- Screen capture or video file as input

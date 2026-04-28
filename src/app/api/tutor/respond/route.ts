@@ -10,6 +10,7 @@ import {
   updateSessionMemory
 } from "@/lib/tutor/memory";
 import { saveStoredSessionMemory } from "@/lib/tutor/sessionMemoryStore";
+import { voiceInteractionSignalsSchema } from "@/lib/tutor/voiceSignals";
 
 export const runtime = "nodejs";
 
@@ -60,7 +61,8 @@ const requestSchema = z.object({
       confidence: z.coerce.number().finite().catch(0.5)
     })
     .nullable()
-    .optional()
+    .optional(),
+  voiceInteractionSignals: voiceInteractionSignalsSchema
 });
 
 export async function POST(request: Request) {
@@ -98,7 +100,8 @@ export async function POST(request: Request) {
       learnerProfile,
       turnIntent,
       activeLearningCheck: body.activeLearningCheck ?? null,
-      learningCheckEvaluation: body.learningCheckEvaluation ?? null
+      learningCheckEvaluation: body.learningCheckEvaluation ?? null,
+      voiceInteractionSignals: body.voiceInteractionSignals ?? null
     };
     const tutorResponse = await provider.generateTutorResponse(tutorInput);
     const nextSessionMemory = updateSessionMemory(tutorInput, tutorResponse);

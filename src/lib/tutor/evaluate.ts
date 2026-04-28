@@ -2,13 +2,15 @@ import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { getEnv, requireTutorProviderKeys } from "@/lib/env";
 import { normalizeConfidence } from "@/lib/modelOutput";
-import type { LearningCheckEvaluation, LearningCheckStatus, LearningContext } from "@/lib/tutor/types";
+import type { LearningCheckEvaluation, LearningCheckStatus, LearningContext, VoiceInteractionSignals } from "@/lib/tutor/types";
+import { formatVoiceInteractionSignals } from "@/lib/tutor/voiceSignals";
 
 type EvaluateLearningCheckInput = {
   learningContext?: LearningContext | null;
   retrievalQuestion: string;
   learnerAnswer: string;
   targetLanguage: string;
+  voiceInteractionSignals?: VoiceInteractionSignals | null;
 };
 
 type RawEvaluation = {
@@ -41,6 +43,9 @@ Status rules:
 - "got-it": The answer is mostly correct and shows the core idea.
 - "needs-practice": The answer is partially correct, vague, missing an important part, or has a minor misconception.
 - "confused": The answer is blank, unrelated, mostly incorrect, or the learner says they do not know.
+- Voice interaction signals are soft context only. Do not lower the score for pauses, short audio, or a short transcript by themselves.
+- One-word and numeric answers can be fully correct when the retrieval question asks for a fact, count, label, or value.
+- Use hesitation signals only to make the feedback more supportive when the answer content is incomplete or uncertain.
 
 Return only valid JSON:
 {
@@ -62,6 +67,9 @@ ${input.retrievalQuestion}
 
 Learner answer:
 ${input.learnerAnswer}
+
+Voice interaction signals:
+${formatVoiceInteractionSignals(input.voiceInteractionSignals)}
 `.trim();
 }
 

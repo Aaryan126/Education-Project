@@ -2,6 +2,7 @@
 
 import { Mic, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { VoiceInteractionSignals } from "@/lib/tutor/types";
 
 const SAMPLE_RATE = 16000;
 const SMART_TURN_AUDIO_WINDOW_SECONDS = 8;
@@ -11,7 +12,7 @@ type VoiceRecorderProps = {
   disabled: boolean;
   sourceLanguage: string;
   tutorSpeaking?: boolean;
-  onTranscript: (text: string) => void;
+  onTranscript: (text: string, voiceInteractionSignals?: VoiceInteractionSignals) => void;
 };
 
 type MicVADInstance = {
@@ -23,8 +24,17 @@ type MicVADInstance = {
 type TurnAnalysisResponse = {
   complete: boolean;
   probability: number;
-  source: string;
+  source: VoiceInteractionSignals["smartTurnSource"];
   reason?: string;
+};
+
+type VoiceTurnStats = {
+  smartTurnProbability: number | null;
+  smartTurnSource: VoiceInteractionSignals["smartTurnSource"];
+  incompleteTurnCount: number;
+  forcedAfterLongSilence: boolean;
+  speechSegmentCount: number;
+  answerAudioDurationMs: number;
 };
 
 export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false, onTranscript }: VoiceRecorderProps) {
@@ -38,6 +48,7 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
   const mountedRef = useRef(false);
   const shouldListenRef = useRef(false);
   const analysisQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const currentTurnStatsRef = useRef<VoiceTurnStats>(createEmptyVoiceTurnStats());
 
   const [listening, setListening] = useState(false);
   const [userSpeaking, setUserSpeaking] = useState(false);
@@ -162,6 +173,7 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
     shouldListenRef.current = false;
     clearIncompleteTurnTimer();
     pendingTurnAudioRef.current = null;
+    currentTurnStatsRef.current = createEmptyVoiceTurnStats();
 
     try {
       await vadRef.current?.destroy();
@@ -191,19 +203,30 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
       return;
     }
 
+    const isNewTurn = pendingTurnAudioRef.current === null;
+
+    if (isNewTurn) {
+      currentTurnStatsRef.current = createEmptyVoiceTurnStats();
+    }
+
     const currentTurnAudio = concatAudio(pendingTurnAudioRef.current, audio);
     pendingTurnAudioRef.current = currentTurnAudio;
+    currentTurnStatsRef.current.speechSegmentCount += 1;
+    currentTurnStatsRef.current.answerAudioDurationMs = getAudioDurationMs(currentTurnAudio);
     setProcessing(true);
     setStatus("Checking turn...");
 
     try {
       const turn = await analyzeTurn(currentTurnAudio);
+      currentTurnStatsRef.current.smartTurnProbability = turn.probability;
+      currentTurnStatsRef.current.smartTurnSource = turn.source;
 
       if (!mountedRef.current || !shouldListenRef.current) {
         return;
       }
 
       if (!turn.complete) {
+        currentTurnStatsRef.current.incompleteTurnCount += 1;
         setProcessing(false);
         setStatus("Listening");
         scheduleIncompleteTurnFallback();
@@ -215,7 +238,13 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
       clearIncompleteTurnTimer();
 
       if (finalAudio) {
-        await transcribeAudio(finalAudio);
+        const voiceTurnStats = captureVoiceTurnStats(finalAudio, false);
+
+        try {
+          await transcribeAudio(finalAudio, voiceTurnStats);
+        } finally {
+          currentTurnStatsRef.current = createEmptyVoiceTurnStats();
+        }
       }
     } finally {
       if (mountedRef.current) {
@@ -253,7 +282,7 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
     return data;
   }
 
-  async function transcribeAudio(audio: Float32Array) {
+  async function transcribeAudio(audio: Float32Array, voiceTurnStats: VoiceTurnStats) {
     if (audio.length < SAMPLE_RATE * 0.2) {
       setStatus("Listening");
       return;
@@ -280,7 +309,9 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
     const transcript = typeof data.text === "string" ? data.text.trim() : "";
 
     if (transcript) {
-      onTranscriptRef.current(transcript);
+      const voiceInteractionSignals = buildVoiceInteractionSignals(transcript, voiceTurnStats);
+      logVoiceInteractionSignals(voiceInteractionSignals);
+      onTranscriptRef.current(transcript, voiceInteractionSignals);
       setStatus("Submitted");
       return;
     }
@@ -296,13 +327,30 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
       pendingTurnAudioRef.current = null;
 
       if (audio && shouldListenRef.current && !disabledRef.current && !tutorSpeakingRef.current) {
-        void transcribeAudio(audio).catch((error) => {
-          if (mountedRef.current) {
-            setStatus(error instanceof Error ? error.message : "Transcription failed");
-          }
-        });
+        const voiceTurnStats = captureVoiceTurnStats(audio, true);
+
+        void transcribeAudio(audio, voiceTurnStats)
+          .catch((error) => {
+            if (mountedRef.current) {
+              setStatus(error instanceof Error ? error.message : "Transcription failed");
+            }
+          })
+          .finally(() => {
+            currentTurnStatsRef.current = createEmptyVoiceTurnStats();
+          });
       }
     }, INCOMPLETE_TURN_SILENCE_FALLBACK_MS);
+  }
+
+  function captureVoiceTurnStats(audio: Float32Array, forcedAfterLongSilence: boolean): VoiceTurnStats {
+    const stats = currentTurnStatsRef.current;
+
+    return {
+      ...stats,
+      forcedAfterLongSilence,
+      speechSegmentCount: Math.max(1, stats.speechSegmentCount),
+      answerAudioDurationMs: getAudioDurationMs(audio)
+    };
   }
 
   const visibleStatus = listening && tutorSpeaking ? "Paused while tutor speaks" : listening && disabled ? "Paused" : status;
@@ -324,6 +372,103 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
       {visibleStatus && <span className={`mic-status ${active ? "recording" : ""}`}>{visibleStatus}</span>}
     </div>
   );
+}
+
+function createEmptyVoiceTurnStats(): VoiceTurnStats {
+  return {
+    smartTurnProbability: null,
+    smartTurnSource: null,
+    incompleteTurnCount: 0,
+    forcedAfterLongSilence: false,
+    speechSegmentCount: 0,
+    answerAudioDurationMs: 0
+  };
+}
+
+function getAudioDurationMs(audio: Float32Array) {
+  return Math.round((audio.length / SAMPLE_RATE) * 1000);
+}
+
+function buildVoiceInteractionSignals(transcript: string, stats: VoiceTurnStats): VoiceInteractionSignals {
+  const trimmedTranscript = transcript.trim();
+  const uncertaintyMarkers = getUncertaintyMarkers(trimmedTranscript);
+  const transcriptWordCount = countTranscriptWords(trimmedTranscript);
+  const transcriptCharacterCount = Array.from(trimmedTranscript.replace(/\s+/g, "")).length;
+  const isNumericAnswer = isNumericAnswerTranscript(trimmedTranscript);
+
+  return {
+    inputMode: "voice",
+    smartTurnProbability: stats.smartTurnProbability,
+    smartTurnSource: stats.smartTurnSource,
+    incompleteTurnCount: stats.incompleteTurnCount,
+    forcedAfterLongSilence: stats.forcedAfterLongSilence,
+    speechSegmentCount: stats.speechSegmentCount,
+    answerAudioDurationMs: stats.answerAudioDurationMs,
+    transcriptWordCount,
+    transcriptCharacterCount,
+    transcriptHasUncertaintyMarkers: uncertaintyMarkers.length > 0,
+    uncertaintyMarkers,
+    isShortAnswer: transcriptWordCount <= 2 && transcriptCharacterCount <= 24,
+    isNumericAnswer
+  };
+}
+
+function getUncertaintyMarkers(transcript: string) {
+  const markerPatterns: Array<[string, RegExp]> = [
+    ["filled pause", /\b(?:um+|uh+|erm|hmm+)\b/i],
+    ["not sure", /\b(?:not sure|unsure)\b/i],
+    ["do not know", /\b(?:i\s+do\s+not\s+know|i\s+don't\s+know|i\s+dont\s+know|no idea)\b/i],
+    ["maybe", /\bmaybe\b/i],
+    ["tentative phrasing", /\b(?:i think|i guess)\b/i]
+  ];
+
+  return markerPatterns.filter(([, pattern]) => pattern.test(transcript)).map(([marker]) => marker);
+}
+
+function countTranscriptWords(transcript: string) {
+  const tokens = transcript.match(/[\p{L}\p{N}]+(?:['-][\p{L}\p{N}]+)*/gu) ?? [];
+  return tokens.length > 0 ? tokens.length : transcript.trim() ? 1 : 0;
+}
+
+function isNumericAnswerTranscript(transcript: string) {
+  const compact = transcript.trim().replace(/[!?]/g, "");
+
+  if (/^[-+]?\d+(?:[.,]\d+)?$/.test(compact)) {
+    return true;
+  }
+
+  const normalized = compact.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
+  const numberWords = new Set([
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+    "twenty"
+  ]);
+
+  return numberWords.has(normalized);
+}
+
+function logVoiceInteractionSignals(signals: VoiceInteractionSignals) {
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[Phloem voice signals]", signals);
+  }
 }
 
 function concatAudio(previous: Float32Array | null, next: Float32Array) {

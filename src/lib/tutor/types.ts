@@ -60,6 +60,22 @@ export type LearningCheckEvaluationContext = {
   confidence: number;
 };
 
+export type VoiceInteractionSignals = {
+  inputMode: "voice";
+  smartTurnProbability: number | null;
+  smartTurnSource: "smart-turn-endpoint" | "smart-turn-python" | "vad-fallback" | "disabled" | null;
+  incompleteTurnCount: number;
+  forcedAfterLongSilence: boolean;
+  speechSegmentCount: number;
+  answerAudioDurationMs: number;
+  transcriptWordCount: number;
+  transcriptCharacterCount: number;
+  transcriptHasUncertaintyMarkers: boolean;
+  uncertaintyMarkers: string[];
+  isShortAnswer: boolean;
+  isNumericAnswer: boolean;
+};
+
 export type TutorRequest = {
   learningContext?: LearningContext | null;
   messages: ConversationMessage[];
@@ -75,6 +91,7 @@ export type TutorRequest = {
   turnIntent?: TutorTurnIntent;
   activeLearningCheck?: ActiveLearningCheckContext | null;
   learningCheckEvaluation?: LearningCheckEvaluationContext | null;
+  voiceInteractionSignals?: VoiceInteractionSignals | null;
 };
 
 export type TutorResponse = {

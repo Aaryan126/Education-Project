@@ -12,6 +12,7 @@ Phloem is a Next.js learning companion that turns a captured image, PDF, or Word
 6. After speech playback completes, ask one retrieval-practice progress check.
 7. If a check is active, score the learner's answer first, update concept mastery, then pass the evaluation into the next tutor turn for corrective feedback.
 8. In hands-free mode, browser Silero VAD segments speech and `/api/speech/turn` uses Smart Turn when available before transcription.
+9. Voice answers attach lightweight interaction signals, such as incomplete pauses, long-silence fallback, short or numeric answer flags, and uncertainty markers, so tutor feedback can be more supportive without changing correctness rules by itself.
 
 ## Setup
 
@@ -44,11 +45,15 @@ npm run build
 
 The VAD assets are copied into `public/vad` by `postinstall`; they are generated files and are intentionally ignored by Git.
 
+In development, each submitted voice answer logs its voice interaction metadata to the browser console as `[Phloem voice signals]`. The same object is included in `/api/tutor/evaluate` and `/api/tutor/respond` request payloads for debugging.
+
 ## Progress Checks
 
 Phloem now tracks learning progress from retrieval practice instead of only model-estimated understanding. Each tutor answer ends with a small check question after TTS playback finishes. When the learner answers by voice or text, the app first calls `/api/tutor/evaluate`, then sends the evaluation into `/api/tutor/respond` so the tutor can give targeted corrective feedback instead of treating the answer like a normal question.
 
-`/api/progress/checks` saves the raw check and updates `concept_mastery` with attempts, correct count, mastery score, last status, and the next spaced review time. The Progress screen shows mastery by concept plus recent checks. If Supabase is not configured or the latest progress tables have not been migrated yet, checks and mastery still work in memory for the current session.
+Voice answers may include hesitation signals, but evaluation remains content-first. Pauses, short audio, and short transcripts do not lower the score by themselves, and one-word or numeric answers can be fully correct when the question asks for a fact, count, label, or value. Hesitation signals only guide tutor tone and scaffolding when the answer content is incomplete or uncertain.
+
+`/api/progress/checks` saves the raw check and updates `concept_mastery` with attempts, correct count, mastery score, last status, and the next spaced review time. The Progress screen shows concept cards, status counts, and recent checks. If Supabase is not configured or the latest progress tables have not been migrated yet, checks and mastery still work in memory for the current session.
 
 The browser also remembers the last saved session ID and keeps a small per-session progress cache. On refresh, Phloem reopens the last saved session and merges cached progress with Supabase data so a recently answered check does not disappear if the page reloads before the network save finishes.
 

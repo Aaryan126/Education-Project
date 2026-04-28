@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getErrorMessage, jsonError, jsonOk } from "@/lib/api";
 import { evaluateLearningCheck } from "@/lib/tutor/evaluate";
+import { voiceInteractionSignalsSchema } from "@/lib/tutor/voiceSignals";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,8 @@ const requestSchema = z.object({
   learningContext: learningContextSchema,
   retrievalQuestion: z.string().min(1),
   learnerAnswer: z.string().min(1),
-  targetLanguage: z.string().default("en")
+  targetLanguage: z.string().default("en"),
+  voiceInteractionSignals: voiceInteractionSignalsSchema
 });
 
 export async function POST(request: Request) {
@@ -31,7 +33,8 @@ export async function POST(request: Request) {
       learningContext: body.learningContext,
       retrievalQuestion: body.retrievalQuestion,
       learnerAnswer: body.learnerAnswer,
-      targetLanguage: body.targetLanguage
+      targetLanguage: body.targetLanguage,
+      voiceInteractionSignals: body.voiceInteractionSignals ?? null
     });
 
     return jsonOk(evaluation);

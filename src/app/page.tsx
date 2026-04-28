@@ -49,7 +49,8 @@ import type {
   LearningContext,
   SessionMemory,
   TutorResponse,
-  UnderstandingLevel
+  UnderstandingLevel,
+  VoiceInteractionSignals
 } from "@/lib/tutor/types";
 import {
   createEmptySessionMemory,
@@ -211,6 +212,11 @@ type ActiveLearningCheck = LearningCheck & {
 type EvaluatedLearningCheck = {
   check: LearningCheck & { status: LearningCheckStatus };
   evaluation: LearningCheckEvaluation;
+};
+
+type SubmitQuestionOptions = {
+  skipLearningCheck?: boolean;
+  voiceInteractionSignals?: VoiceInteractionSignals | null;
 };
 
 type SessionProgressCache = {
@@ -484,6 +490,7 @@ async function evaluateLearningCheckRequest(payload: {
   retrievalQuestion: string;
   learnerAnswer: string;
   targetLanguage: string;
+  voiceInteractionSignals?: VoiceInteractionSignals | null;
 }) {
   return fetch("/api/tutor/evaluate", {
     method: "POST",
@@ -1237,7 +1244,8 @@ export default function Home() {
 
   async function evaluateActiveLearningCheck(
     check: LearningCheck,
-    learnerAnswer: string
+    learnerAnswer: string,
+    voiceInteractionSignals?: VoiceInteractionSignals | null
   ): Promise<EvaluatedLearningCheck> {
     const activeSessionId = sessionId;
     const checkingCheck: LearningCheck = {
@@ -1257,7 +1265,8 @@ export default function Home() {
         learningContext: checkLearningContext,
         retrievalQuestion: check.question,
         learnerAnswer,
-        targetLanguage
+        targetLanguage,
+        voiceInteractionSignals
       });
 
       const updatedCheck: LearningCheck & { status: LearningCheckStatus } = {
@@ -1338,13 +1347,14 @@ export default function Home() {
   }
 
   // ---- Question submission ----
-  async function submitQuestion(forcedQuestion?: string, options?: { skipLearningCheck?: boolean }) {
+  async function submitQuestion(forcedQuestion?: string, options?: SubmitQuestionOptions) {
     const text = (forcedQuestion ?? question).trim();
 
     if (!text) {
       return;
     }
 
+    const voiceInteractionSignals = options?.voiceInteractionSignals ?? null;
     const checkToEvaluate =
       !options?.skipLearningCheck && activeLearningCheck?.status === "unanswered" ? activeLearningCheck : null;
 
@@ -1366,7 +1376,7 @@ export default function Home() {
 
       if (checkToEvaluate) {
         setStatus("Checking your answer...");
-        evaluatedCheck = await evaluateActiveLearningCheck(checkToEvaluate, text);
+        evaluatedCheck = await evaluateActiveLearningCheck(checkToEvaluate, text, voiceInteractionSignals);
 
         if (controller.signal.aborted) {
           setTutorStopped(true);
@@ -1407,7 +1417,8 @@ export default function Home() {
                 feedback: evaluatedCheck.evaluation.feedback,
                 confidence: evaluatedCheck.evaluation.confidence
               }
-            : null
+            : null,
+          voiceInteractionSignals
         })
       }).then((response) => readJsonResponse<TutorResponse>(response));
 
@@ -2400,9 +2411,9 @@ export default function Home() {
                       disabled={busy}
                       sourceLanguage={sourceLanguage}
                       tutorSpeaking={tutorSpeaking}
-                      onTranscript={(transcript) => {
+                      onTranscript={(transcript, voiceInteractionSignals) => {
                         setQuestion(transcript);
-                        void submitQuestion(transcript);
+                        void submitQuestion(transcript, { voiceInteractionSignals });
                       }}
                     />
                   }
@@ -2490,9 +2501,9 @@ export default function Home() {
                     disabled={busy}
                     sourceLanguage={sourceLanguage}
                     tutorSpeaking={tutorSpeaking}
-                    onTranscript={(transcript) => {
+                    onTranscript={(transcript, voiceInteractionSignals) => {
                       setQuestion(transcript);
-                      void submitQuestion(transcript);
+                      void submitQuestion(transcript, { voiceInteractionSignals });
                     }}
                   />
                 }
@@ -2960,25 +2971,6 @@ function getLearningCheckTime(check: LearningCheck) {
   return Number.isFinite(time) ? time : 0;
 }
 
-function formatReviewTime(value: string | null) {
-  if (!value) {
-    return "Not scheduled";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Not scheduled";
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  }).format(date);
-}
-
 function sortConceptMasteries(masteries: ConceptMastery[]) {
   return [...masteries].sort((first, second) => {
     const firstReview = first.nextReviewAt ? new Date(first.nextReviewAt).getTime() : Number.POSITIVE_INFINITY;
@@ -3303,7 +3295,6 @@ function ProgressScreen({
   const gotItCount = scoredChecks.filter((check) => check.status === "got-it").length;
   const needsPracticeCount = scoredChecks.filter((check) => check.status === "needs-practice").length;
   const confusedCount = scoredChecks.filter((check) => check.status === "confused").length;
-  const scheduledReviewCount = masteries.filter((mastery) => mastery.nextReviewAt).length;
   const accuracyPercent = scoredChecks.length > 0 ? Math.round((gotItCount / scoredChecks.length) * 100) : 0;
   const conceptMap = new Map<string, LearningCheck[]>();
 
@@ -3318,11 +3309,7 @@ function ProgressScreen({
     const mastery = masteryMap.get(key) ?? null;
     const conceptChecks = conceptMap.get(key) ?? [];
     const latest = conceptChecks[0] ?? null;
-    const gotIt = conceptChecks.filter((check) => check.status === "got-it").length;
     const attempts = mastery?.attempts ?? conceptChecks.length;
-    const correctCount = mastery?.correctCount ?? gotIt;
-    const accuracy = attempts > 0 ? Math.round((correctCount / attempts) * 100) : 0;
-    const masteryScore = mastery ? Math.round(mastery.masteryScore * 100) : accuracy;
 
     return {
       key,
@@ -3330,11 +3317,7 @@ function ProgressScreen({
       checks: conceptChecks,
       latest,
       attempts,
-      correctCount,
-      accuracy,
-      masteryScore,
-      status: mastery?.lastStatus ?? latest?.status ?? "needs-practice",
-      nextReviewAt: mastery?.nextReviewAt ?? latest?.nextReviewAt ?? null
+      status: mastery?.lastStatus ?? latest?.status ?? "needs-practice"
     };
   });
 
@@ -3398,9 +3381,7 @@ function ProgressScreen({
             <div>
               <span>Current score</span>
               <strong>{accuracyPercent}%</strong>
-              <p>
-                {scheduledReviewCount} concept{scheduledReviewCount === 1 ? "" : "s"} scheduled for spaced review.
-              </p>
+              <p>Based on answers to tutor check questions.</p>
             </div>
             <div className="progress-meter" aria-label={`${accuracyPercent}% got it`}>
               <span style={{ width: `${accuracyPercent}%` }} />
@@ -3424,11 +3405,6 @@ function ProgressScreen({
                     {item.latest?.question ?? "Concept mastery was restored from saved progress."}
                   </p>
                   <p className="progress-feedback">{item.latest?.feedback || "No feedback yet."}</p>
-                  <div className="progress-concept-footer">
-                    <span>{item.masteryScore}% mastery</span>
-                    <span>{item.accuracy}% accuracy</span>
-                    <span>Review {formatReviewTime(item.nextReviewAt)}</span>
-                  </div>
                   {hasMaterials && (
                     <button
                       className="material-action-link primary"

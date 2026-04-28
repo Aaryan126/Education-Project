@@ -32,8 +32,9 @@ Material processing starts in `src/app/page.tsx`. Images are sent to `/api/visio
 1. Validate the browser payload with the selected material, recent messages, settings, active check, and current session memory.
 2. Classify the latest learner turn with `src/lib/tutor/intent.ts` as a normal question, check answer, summary request, direct-answer request, practice request, translation/read-aloud request, or off-topic turn.
 3. Build prompts with `src/lib/tutor/prompt.ts`. The system prompt contains tutor behavior and safety rules only. Uploaded material is passed as explicitly untrusted context in the user prompt.
-4. Call the configured provider from `src/lib/llm`. Anthropic uses a strict tool schema; Z.ai uses JSON mode.
-5. Return structured tutor output, including response, follow-up question, target concept, tutor move, memory update candidates, and the updated session memory.
+4. Attach voice interaction signals when the latest learner turn came from hands-free voice. These signals are soft context only, such as incomplete pauses, long-silence fallback, segment count, answer duration, short or numeric answer flags, and transcript uncertainty markers.
+5. Call the configured provider from `src/lib/llm`. Anthropic uses a strict tool schema; Z.ai uses JSON mode.
+6. Return structured tutor output, including response, follow-up question, target concept, tutor move, memory update candidates, and the updated session memory.
 
 The tutor remains model-stateless. Durable continuity comes from app-owned memory, saved messages, saved progress checks, and concept mastery rows.
 
@@ -45,7 +46,8 @@ The tutor remains model-stateless. Durable continuity comes from app-owned memor
 4. `src/lib/speech/smartTurn.ts` checks a configured Smart Turn endpoint first. If none is configured, it starts `scripts/smart_turn_worker.py`.
 5. The Python worker converts PCM to Whisper features and runs `smart-turn-v3.2-cpu.onnx`.
 6. If Smart Turn says the user is not finished, the client waits for more speech. After a longer silence fallback, it submits the accumulated audio anyway.
-7. Complete turns are transcribed and submitted to the tutor automatically.
+7. Complete turns are transcribed and wrapped with voice interaction signals before submission.
+8. The tutor and progress-check evaluator receive those signals as coaching context. The prompts explicitly say that pauses, short audio, and short transcripts do not prove an answer is wrong, and that one-word or numeric answers can be correct for factual questions.
 
 If Smart Turn is disabled or unavailable, `/api/speech/turn` returns a VAD fallback result so hands-free mode still works.
 
@@ -67,13 +69,14 @@ The progress loop uses actual learner answers:
 2. The client reveals the assistant text and speaks it.
 3. After TTS completion, the follow-up question becomes the active progress check.
 4. The learner answers by voice or text.
-5. The client routes active-check answers through `/api/tutor/evaluate` before calling the tutor again.
-6. `/api/tutor/evaluate` scores the answer and returns a concept, feedback, confidence, and status.
-7. The scored check updates local concept mastery immediately.
-8. `/api/progress/checks` saves the check row and updates `concept_mastery` when the current session has a Supabase `session_id`.
-9. `/api/tutor/respond` receives the evaluation context and uses it for corrective feedback before moving to the next small step.
+5. Voice answers include interaction signals when available, but answer scoring remains content-first.
+6. The client routes active-check answers through `/api/tutor/evaluate` before calling the tutor again.
+7. `/api/tutor/evaluate` scores the answer and returns a concept, feedback, confidence, and status.
+8. The scored check updates local concept mastery immediately.
+9. `/api/progress/checks` saves the check row and updates `concept_mastery` when the current session has a Supabase `session_id`.
+10. `/api/tutor/respond` receives the evaluation context and any voice signals, then uses them for corrective feedback before moving to the next small step.
 
-Saved checks and concept mastery rows are loaded alongside a session and rendered in the Progress screen as concept cards, mastery score, accuracy, recent checks, status counts, and next review times. The browser remembers the last saved session ID and keeps a small per-session progress cache, then merges that cache with Supabase on reload. This covers fast-refresh cases where the UI showed an evaluated check before the background save finished. The app tolerates missing progress tables so older Supabase projects can still load sessions before running the latest schema.
+Saved checks and concept mastery rows are loaded alongside a session and rendered in the Progress screen as concept cards, status counts, and recent checks. The browser remembers the last saved session ID and keeps a small per-session progress cache, then merges that cache with Supabase on reload. This covers fast-refresh cases where the UI showed an evaluated check before the background save finished. The app tolerates missing progress tables so older Supabase projects can still load sessions before running the latest schema.
 
 ## Persistence
 

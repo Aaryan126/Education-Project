@@ -16,6 +16,7 @@ type ConversationPanelProps = {
   tutorSpeaking: boolean;
   speechTrace: SpeechTraceState | null;
   understandingLevel: UnderstandingLevel;
+  activeLearningCheck: ActiveLearningCheck | null;
   quickActions: Array<{
     label: string;
     text: string;
@@ -24,9 +25,16 @@ type ConversationPanelProps = {
   onQuestionChange: (question: string) => void;
   onSend: () => void;
   onQuickAction: (text: string) => void;
+  onSkipLearningCheck: () => void;
   onStopResponding: () => void;
   onStopSpeaking: () => void;
   onSpeakLast: () => void;
+};
+
+type ActiveLearningCheck = {
+  concept: string;
+  question: string;
+  status: "unanswered" | "checking";
 };
 
 export type SpeechTraceState = {
@@ -53,11 +61,13 @@ export function ConversationPanel({
   tutorSpeaking,
   speechTrace,
   understandingLevel,
+  activeLearningCheck,
   quickActions,
   voiceRecorder,
   onQuestionChange,
   onSend,
   onQuickAction,
+  onSkipLearningCheck,
   onStopResponding,
   onStopSpeaking,
   onSpeakLast
@@ -165,6 +175,25 @@ export function ConversationPanel({
       </div>
 
       <div className="composer">
+        {activeLearningCheck && (
+          <div className="learning-check-banner">
+            <div>
+              <span>{activeLearningCheck.status === "checking" ? "Checking answer" : "Progress check"}</span>
+              <strong>{activeLearningCheck.question}</strong>
+              <p>
+                {activeLearningCheck.status === "checking"
+                  ? "Phloem is scoring this answer from your reply."
+                  : `Your next reply updates progress for ${activeLearningCheck.concept}.`}
+              </p>
+            </div>
+            {activeLearningCheck.status === "unanswered" && (
+              <button type="button" onClick={onSkipLearningCheck} disabled={busy}>
+                Skip
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="quick-actions" aria-label="Quick tutor actions">
           {canStopResponse && (
             <button className="stop-response-chip" type="button" onClick={onStopResponding}>

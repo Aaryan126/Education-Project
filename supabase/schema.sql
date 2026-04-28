@@ -33,6 +33,24 @@ create table if not exists public.messages (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.learning_checks (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.sessions(id) on delete cascade,
+  owner_key text not null default 'main',
+  material_id uuid references public.materials(id) on delete set null,
+  material_name text not null default 'Current material',
+  concept text not null default 'Current concept',
+  question text not null,
+  answer text not null default '',
+  status text not null check (status in ('unanswered', 'checking', 'got-it', 'needs-practice', 'confused')),
+  feedback text not null default '',
+  confidence double precision,
+  created_at timestamptz not null default now(),
+  answered_at timestamptz,
+  next_review_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.tts_usage_months (
   owner_key text not null default 'main',
   usage_month text not null,
@@ -46,6 +64,10 @@ create table if not exists public.tts_usage_months (
 create index if not exists sessions_owner_updated_idx on public.sessions(owner_key, updated_at desc);
 create index if not exists materials_owner_session_idx on public.materials(owner_key, session_id);
 create index if not exists messages_owner_session_created_idx on public.messages(owner_key, session_id, created_at);
+create index if not exists learning_checks_owner_session_created_idx on public.learning_checks(owner_key, session_id, created_at desc);
+create index if not exists learning_checks_owner_next_review_idx on public.learning_checks(owner_key, next_review_at);
+
+drop function if exists public.increment_tts_usage_month(text, text, text, integer);
 
 create or replace function public.increment_tts_usage_month(
   p_owner_key text,

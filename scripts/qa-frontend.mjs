@@ -124,7 +124,9 @@ try {
   await page.getByPlaceholder(/ask a question/i).fill("What is photosynthesis?");
   await page.getByRole("button", { name: /^send message$/i }).click();
 
-  await page.getByText(/Which one of those ingredients comes from the air/i).waitFor({ state: "visible" });
+  await page.locator(".message.assistant").getByText(/Which one of those ingredients comes from the air/i).waitFor({
+    state: "visible"
+  });
   console.log("Frontend QA passed");
 } finally {
   await browser?.close();

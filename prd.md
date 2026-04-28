@@ -43,7 +43,8 @@ An AI-powered web application that:
 4. **Speaks responses aloud** in the learner's preferred language
 5. **Adapts difficulty dynamically** based on conversation signals
 6. **Persists sessions server-side** so learners can return to previous conversations
-7. **Tracks usage and cost** across TTS providers
+7. **Tracks learning progress from retrieval practice** using actual learner answers
+8. **Tracks usage and cost** across TTS providers
 
 ---
 
@@ -69,7 +70,8 @@ Open app -> Capture/upload material(s) -> Vision extracts context
   -> Review extracted topic & summary -> Ask question (voice or text)
   -> Tutor responds with Socratic guidance + follow-up
   -> Response spoken aloud (with word-by-word highlight)
-  -> Loop continues, difficulty adapts
+  -> Learner answers follow-up retrieval check
+  -> Progress updates by concept; loop continues, difficulty adapts
 ```
 
 ---
@@ -186,6 +188,10 @@ Three-tier provider architecture:
 - Auto-detect (default)
 - Manual override: English, Chinese, Spanish, Hindi, Malay
 
+**Language display:**
+- User-facing badges and menus show full language names (for example, "English") rather than raw locale codes (`en`)
+- The landing page language selector uses a custom themed menu instead of native browser dropdown styling
+
 Default tutoring language is configurable via `DEFAULT_TUTOR_LANGUAGE` env var (default: `zh-CN`).
 
 ### 5.7 Adaptive Learning
@@ -202,33 +208,59 @@ The level is updated after each tutor response based on the model's assessment (
 - Passed to tutor engine as `allowDirectAnswer` flag
 - Tutor respects it but still encourages reasoning first
 
-### 5.8 Session Persistence & History (Supabase)
+### 5.8 Retrieval Practice & Progress Tracking
 
-**Database schema (4 tables):**
+Phloem now separates real learning progress from model-guessed understanding. The tutor still estimates `understandingLevel` for response style, but the Progress screen is driven by learner answers to retrieval checks.
+
+**Core loop:**
+1. Tutor generates a normal Socratic response plus one focused follow-up question.
+2. Assistant text is revealed and spoken aloud.
+3. Only after TTS playback completes, the follow-up question becomes the active progress check.
+4. The learner answers by voice or text.
+5. `/api/tutor/evaluate` scores the answer and returns one of three statuses:
+   - `got-it`
+   - `needs-practice`
+   - `confused`
+6. The check is saved through `/api/progress/checks` when the session exists in Supabase.
+
+**Progress dashboard:**
+- Groups checks by concept, not just by session
+- Shows answered check count, got-it count, needs-practice count, confused count
+- Shows latest question, learner answer, tutor feedback, and next review time
+- Supports practice prompts for a concept from the Progress screen
+- Continues to work in memory when Supabase is not configured
+
+### 5.9 Session Persistence & History (Supabase)
+
+**Database schema (5 tables):**
 
 | Table | Purpose |
 |---|---|
 | `sessions` | Learning session metadata (title, languages, status, timestamps) |
 | `materials` | Uploaded files (name, MIME type, storage path, learning_context JSONB) |
 | `messages` | Conversation history (role, content, client-side ID for optimistic UI) |
+| `learning_checks` | Retrieval-practice answers, concept status, feedback, and spaced review timestamps |
 | `tts_usage_months` | Monthly TTS character/request tracking per provider |
 
 **Features:**
 - Sessions auto-saved on start (materials stored in Supabase Storage bucket)
 - Messages saved optimistically after each tutor exchange
+- Learning checks saved when created, scored, or skipped
 - Session list view with material/message counts, last-updated sorting
 - Materials library grid with preview thumbnails, download links, session linkage
-- Full session reload (restores materials, messages, language settings)
-- Delete session (cascades to materials and messages)
+- Full session reload (restores materials, messages, language settings, and progress checks)
+- Delete session (cascades to materials, messages, and learning checks)
 - Delete individual material (removes storage file + DB row)
 - Graceful degradation when Supabase is not configured (in-memory only)
 
 **Owner key model:** Single `owner_key` (default: `"main"`) for current single-user mode. Designed to migrate to Supabase Auth + row-level security later without changing the learning flow.
 
-### 5.9 UI / UX Design
+**Schema migration note:** `supabase/schema.sql` is intended to be rerunnable in the Supabase SQL Editor. It drops and recreates only the `increment_tts_usage_month(text,text,text,integer)` RPC function before redefining it, because PostgreSQL cannot change an existing function return type in place.
+
+### 5.10 UI / UX Design
 
 **Application structure:**
-- **Landing page** (capture phase): Sidebar navigation (Learn, Sessions, Materials, Progress placeholder, Settings) + main content area with greeting, upload panel, example cards, pending materials queue, processing overlay
+- **Landing page** (capture phase): Sidebar navigation (Learn, Sessions, Materials, Progress, Settings) + main content area with greeting, upload panel, example cards, pending materials queue, processing overlay, and custom themed language menu
 - **Session page** (learn phase): Same sidebar + header with session title/page count/language + workspace with material rail (thumbnail strip + detail panel) and conversation panel
 - **Legacy review phase:** Two-panel layout (material rail + conversation) retained for backward compatibility
 
@@ -238,12 +270,13 @@ The level is updated after each tutor response based on the model's assessment (
 - `VoiceRecorder` -- Hands-free VAD microphone control with speech/start/end status, Smart Turn completion checks, and automatic transcription/submission
 - Phase navigation -- The current app uses the sidebar and view state for Capture/Learn navigation; there is no standalone `StepIndicator` component in the current UI
 - `MaterialRail` -- Thumbnail strip for multi-material sessions with selection and detail panel
+- `ProgressScreen` -- Concept-level learning progress from retrieval checks
 - `SettingsScreen` -- Language selectors, direct-answer toggle, TTS voice style, TTS usage meter, session persistence info
 - `SessionsScreen` -- Saved session history list with open/delete actions
 - `MaterialsScreen` -- Library grid of uploaded materials with preview, download, session linkage, delete
 - `ProcessingOverlay` -- Full-screen spinner during material processing
 
-**Design system:** Custom vanilla CSS (~3400 lines) with CSS custom properties (design tokens). No Tailwind. Lucide React icons. Mobile-responsive layout.
+**Design system:** Custom vanilla CSS (~3900 lines) with CSS custom properties (design tokens). No Tailwind. Lucide React icons. Mobile-responsive layout.
 
 ---
 
@@ -297,6 +330,16 @@ ConversationPanel  /api/speech/synthesize
            Audio Playback
       (with word-by-word
        speech trace highlight)
+                |
+                v
+       Retrieval check appears
+       after TTS completion
+                |
+                v
+       Learner answer -> /api/tutor/evaluate
+                |
+                v
+       /api/progress/checks -> Supabase
 ```
 
 ### 6.2 Tech Stack
@@ -313,7 +356,7 @@ ConversationPanel  /api/speech/synthesize
 | TTS (secondary) | OpenAI gpt-4o-mini-tTS | MP3 + PCM streaming support |
 | TTS (fallback) | Browser Web Speech API | Zero-config, works everywhere |
 | VAD | @ricky0123/vad-web | Silero VAD on ONNX Runtime Web (client-side) |
-| Database | Supabase (PostgreSQL) | Sessions, materials, messages, usage tracking |
+| Database | Supabase (PostgreSQL) | Sessions, materials, messages, learning checks, usage tracking |
 | Storage | Supabase Storage | Uploaded file blobs |
 | Validation | Zod | All API inputs and LLM outputs |
 | Icons | Lucide React | Consistent icon set |
@@ -348,11 +391,14 @@ Both providers share:
 | POST | `/api/speech/synthesize` | Text -> Audio (MP3 base64) |
 | POST | `/api/speech/synthesize/stream` | Text -> Audio (PCM streaming) |
 | POST | `/api/tutor/respond` | Conversation -> Socratic response |
+| POST | `/api/tutor/evaluate` | Retrieval answer -> concept status and feedback |
 | GET | `/api/sessions` | List saved sessions |
 | POST | `/api/sessions` | Create new session with materials |
-| GET | `/api/sessions/[id]` | Load full session (materials + messages) |
+| GET | `/api/sessions/[id]` | Load full session (materials + messages + progress checks) |
 | DELETE | `/api/sessions/[id]` | Delete session (cascade) |
 | POST | `/api/sessions/messages` | Save conversation messages |
+| POST | `/api/progress/checks` | Upsert a learning progress check |
+| DELETE | `/api/progress/checks` | Delete a skipped learning progress check |
 | GET | `/api/materials` | List saved materials library |
 | DELETE | `/api/materials/[id]` | Delete material (file + row) |
 | GET | `/api/usage/tts` | Current month TTS usage stats |
@@ -409,9 +455,10 @@ Both providers share:
 - [x] Create sessions with one or more materials
 - [x] Auto-save to Supabase on session start
 - [x] Save messages after each exchange
+- [x] Save retrieval progress checks for persisted sessions
 - [x] List past sessions with summary info
-- [x] Load full session (materials + messages + settings)
-- [x] Delete sessions (cascade delete materials/messages)
+- [x] Load full session (materials + messages + settings + progress checks)
+- [x] Delete sessions (cascade delete materials/messages/progress checks)
 - [x] Materials library with previews and downloads
 - [x] Delete individual materials
 - [x] Graceful in-memory operation without Supabase
@@ -422,6 +469,8 @@ Both providers share:
 - [x] Target tutoring language selection (5 languages)
 - [x] Bilingual tutoring capability
 - [x] Language preserved across session save/load
+- [x] Full language names in user-facing badges and menus
+- [x] Themed custom language menu on the home screen
 
 ### 7.7 Settings & Preferences
 
@@ -431,6 +480,17 @@ Both providers share:
 - [x] TTS voice style (male/female)
 - [x] TTS usage dashboard (monthly tracking)
 - [x] Health status indicator (API key configuration)
+
+### 7.8 Learning Progress
+
+- [x] Create a retrieval check from each tutor follow-up question
+- [x] Delay the progress check banner until TTS playback fully completes
+- [x] Accept progress-check answers by text or voice
+- [x] Score answers as got it, needs practice, or confused
+- [x] Persist checks to Supabase when a session is saved
+- [x] Load persisted checks with saved sessions
+- [x] Show concept-level progress cards, status counts, recent checks, and next review times
+- [x] Delete skipped active checks from persisted progress
 
 ---
 
@@ -490,8 +550,9 @@ All behavior is configurable via environment variables (validated by Zod schema 
 4. User asks verbally: *"What do plants need for photosynthesis?"*
 5. Tutor responds (in Chinese): Guided hint about sunlight, water, air + follow-up question
 6. Response is spoken aloud with word-by-word highlighting
-7. User answers; tutor adapts difficulty based on response quality
-8. Session auto-saves; user can reopen later from Sessions screen
+7. After speech completes, the follow-up becomes a progress check
+8. User answers; Phloem tags the concept as got it, needs practice, or confused
+9. Session auto-saves; user can reopen later from Sessions screen with progress restored
 
 ---
 
@@ -500,11 +561,11 @@ All behavior is configurable via environment variables (validated by Zod schema 
 | Metric | Measurement |
 |---|---|
 | Engagement | Conversation length (number of exchanges per session) |
-| Learning effectiveness | Improvement in understanding level over session |
+| Learning effectiveness | Retrieval-check status by concept, got-it rate, and reduction in confused/needs-practice checks over time |
 | Socratic fidelity | Ratio of hint/guidance responses vs. direct-answer responses |
 | Platform reliability | Vision extraction success rate, STT accuracy |
 | TTS efficiency | Characters consumed per session, free-tier utilization |
-| Retention | Return visits (sessions loaded from history) |
+| Retention | Return visits, sessions loaded from history, progress checks resumed from saved sessions |
 
 ---
 
@@ -512,7 +573,7 @@ All behavior is configurable via environment variables (validated by Zod schema 
 
 ### Near-term
 - [ ] **Streaming tutor responses** -- Reduce perceived latency with token-streaming from LLM (Plan Phase 7)
-- [ ] **Progress dashboard** -- Placeholder exists in sidebar; needs learning analytics
+- [ ] **Spaced-review scheduling UI** -- Turn saved next-review timestamps into reminders and review queues
 - [ ] **Session sharing** -- Share button in session header (non-functional currently)
 - [ ] **User authentication** -- Supabase Auth integration, replace owner_key model
 - [ ] **Rate limiting & cost controls** -- Prevent abuse of paid API calls

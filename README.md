@@ -8,7 +8,9 @@ Phloem is a Next.js learning companion that turns a captured image, PDF, or Word
 2. Extract text and learning context with OpenAI vision/text models.
 3. Generate a structured tutor response with Anthropic or Z.ai.
 4. Speak the response with browser TTS, OpenAI TTS, or Google Cloud TTS.
-5. In hands-free mode, browser Silero VAD segments speech and `/api/speech/turn` uses Smart Turn when available before transcription.
+5. After speech playback completes, ask one retrieval-practice progress check.
+6. Score the learner's answer as `got-it`, `needs-practice`, or `confused`, then save the concept progress in Supabase.
+7. In hands-free mode, browser Silero VAD segments speech and `/api/speech/turn` uses Smart Turn when available before transcription.
 
 ## Setup
 
@@ -28,6 +30,8 @@ If you want real local Smart Turn, place `smart-turn-v3.2-cpu.onnx` at `models/s
 
 Copy `.env.example` to `.env` and fill the provider keys you use. Keep Supabase service role keys in `.env` only.
 
+If you use Supabase persistence, run `supabase/schema.sql` in the Supabase SQL Editor. The schema creates sessions, materials, messages, learning checks, and TTS usage tables. It is intended to be rerunnable; the TTS usage RPC is dropped and recreated without deleting usage rows.
+
 ## Development
 
 ```bash
@@ -38,6 +42,12 @@ npm run build
 ```
 
 The VAD assets are copied into `public/vad` by `postinstall`; they are generated files and are intentionally ignored by Git.
+
+## Progress Checks
+
+Phloem now tracks learning progress from retrieval practice instead of only model-estimated understanding. Each tutor answer ends with a small check question after TTS playback finishes. The learner answers by voice or text, `/api/tutor/evaluate` scores the answer, and `/api/progress/checks` saves the result to Supabase when a session is persisted.
+
+The Progress screen groups saved checks by concept and shows status, feedback, score, and next review time. If Supabase is not configured or the `learning_checks` table has not been migrated yet, checks still work in memory for the current session.
 
 ## Voice Settings
 

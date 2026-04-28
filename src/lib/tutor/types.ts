@@ -35,3 +35,13 @@ export type TutorResponse = {
   confidence: number;
   provider: string;
 };
+
+export type LearningCheckStatus = "got-it" | "needs-practice" | "confused";
+
+export type LearningCheckEvaluation = {
+  status: LearningCheckStatus;
+  concept: string;
+  feedback: string;
+  confidence: number;
+  provider: string;
+};

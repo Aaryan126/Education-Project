@@ -23,6 +23,20 @@ type StoredMaterialRef = {
   storage_path: string | null;
 };
 
+type SupabaseErrorLike = {
+  code?: string;
+  message?: string;
+};
+
+function isMissingLearningChecksTable(error: SupabaseErrorLike | null | undefined) {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    error?.code === "42P01" ||
+    (message.includes("relation") && message.includes("learning_checks") && message.includes("does not exist"))
+  );
+}
+
 async function removeStoredMaterials(materials: StoredMaterialRef[]) {
   const supabase = getSupabaseAdmin();
 
@@ -73,21 +87,32 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
       return jsonError("Session not found.", 404, sessionError?.message);
     }
 
-    const [{ data: materialRows, error: materialsError }, { data: messageRows, error: messagesError }] =
-      await Promise.all([
-        supabase
-          .from("materials")
-          .select("id,name,mime_type,storage_bucket,storage_path,learning_context,created_at")
-          .eq("owner_key", ownerKey)
-          .eq("session_id", sessionId)
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("messages")
-          .select("id,client_id,role,content,created_at")
-          .eq("owner_key", ownerKey)
-          .eq("session_id", sessionId)
-          .order("created_at", { ascending: true })
-      ]);
+    const [
+      { data: materialRows, error: materialsError },
+      { data: messageRows, error: messagesError },
+      { data: learningCheckRows, error: learningChecksError }
+    ] = await Promise.all([
+      supabase
+        .from("materials")
+        .select("id,name,mime_type,storage_bucket,storage_path,learning_context,created_at")
+        .eq("owner_key", ownerKey)
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("messages")
+        .select("id,client_id,role,content,created_at")
+        .eq("owner_key", ownerKey)
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("learning_checks")
+        .select(
+          "id,material_id,material_name,concept,question,answer,status,feedback,confidence,created_at,answered_at,next_review_at"
+        )
+        .eq("owner_key", ownerKey)
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: false })
+    ]);
 
     if (materialsError) {
       throw new Error(materialsError.message);
@@ -95,6 +120,10 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
 
     if (messagesError) {
       throw new Error(messagesError.message);
+    }
+
+    if (learningChecksError && !isMissingLearningChecksTable(learningChecksError)) {
+      throw new Error(learningChecksError.message);
     }
 
     const materials = await Promise.all(
@@ -136,7 +165,23 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
         role: message.role,
         content: message.content,
         createdAt: message.created_at
-      }))
+      })),
+      learningChecks: learningChecksError
+        ? []
+        : (learningCheckRows ?? []).map((check) => ({
+            id: check.id,
+            materialId: check.material_id,
+            materialName: check.material_name,
+            concept: check.concept,
+            question: check.question,
+            answer: check.answer,
+            status: check.status,
+            feedback: check.feedback,
+            confidence: check.confidence,
+            createdAt: check.created_at,
+            answeredAt: check.answered_at,
+            nextReviewAt: check.next_review_at
+          }))
     });
   } catch (error) {
     return jsonError("Unable to load session.", 500, getErrorMessage(error));

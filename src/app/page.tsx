@@ -40,7 +40,14 @@ import {
   getSpeechTraceWords,
   type SpeechTimingPoint
 } from "@/lib/speech/trace";
-import type { ConversationMessage, LearningContext, TutorResponse, UnderstandingLevel } from "@/lib/tutor/types";
+import type {
+  ConversationMessage,
+  LearningCheckEvaluation,
+  LearningCheckStatus,
+  LearningContext,
+  TutorResponse,
+  UnderstandingLevel
+} from "@/lib/tutor/types";
 
 // Re-exported for use by StepIndicator
 export type SessionPhase = "capture" | "review" | "learn";
@@ -135,6 +142,7 @@ type LoadedSessionResponse = {
     createdAt: string;
   }>;
   messages: ConversationMessage[];
+  learningChecks?: LearningCheck[];
 };
 
 type TtsUsageResponse = {
@@ -148,6 +156,65 @@ type TtsUsageResponse = {
   persisted: boolean;
   updatedAt: string | null;
   error?: string;
+};
+
+type LearningCheckUiStatus = LearningCheckStatus | "unanswered" | "checking";
+
+type LearningCheck = {
+  id: string;
+  materialId: string | null;
+  materialName: string;
+  concept: string;
+  question: string;
+  answer: string;
+  status: LearningCheckUiStatus;
+  feedback: string;
+  confidence: number | null;
+  createdAt: string;
+  answeredAt: string | null;
+  nextReviewAt: string | null;
+};
+
+type ActiveLearningCheck = LearningCheck & {
+  status: "unanswered" | "checking";
+};
+
+const LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "zh-CN", label: "Chinese" },
+  { value: "es", label: "Spanish" },
+  { value: "hi", label: "Hindi" },
+  { value: "ms", label: "Malay" }
+];
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  auto: "Auto detect",
+  en: "English",
+  "en-us": "English",
+  "en-gb": "English",
+  zh: "Chinese",
+  "zh-cn": "Chinese",
+  "zh-hans": "Chinese",
+  "zh-tw": "Chinese",
+  "zh-hant": "Chinese",
+  es: "Spanish",
+  hi: "Hindi",
+  ms: "Malay",
+  id: "Indonesian",
+  fr: "French",
+  de: "German",
+  it: "Italian",
+  ja: "Japanese",
+  ko: "Korean",
+  pt: "Portuguese",
+  ru: "Russian",
+  ar: "Arabic",
+  ta: "Tamil",
+  te: "Telugu",
+  bn: "Bengali",
+  ur: "Urdu",
+  vi: "Vietnamese",
+  th: "Thai"
 };
 
 const sampleLearningContext: LearningContext = {
@@ -218,8 +285,106 @@ async function deleteSavedMaterialRequest(materialId: string) {
   );
 }
 
+async function saveLearningCheckRequest(sessionId: string | null, check: LearningCheck) {
+  if (!sessionId) {
+    return;
+  }
+
+  await fetch("/api/progress/checks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId, check })
+  }).then((response) => readJsonResponse<{ persisted: boolean }>(response));
+}
+
+async function deleteLearningCheckRequest(sessionId: string | null, checkId: string) {
+  if (!sessionId) {
+    return;
+  }
+
+  await fetch("/api/progress/checks", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId, checkId })
+  }).then((response) => readJsonResponse<{ persisted: boolean; deleted: boolean }>(response));
+}
+
 async function loadTtsUsageRequest() {
   return fetch("/api/usage/tts").then((response) => readJsonResponse<TtsUsageResponse>(response));
+}
+
+async function evaluateLearningCheckRequest(payload: {
+  learningContext: LearningContext | null;
+  retrievalQuestion: string;
+  learnerAnswer: string;
+  targetLanguage: string;
+}) {
+  return fetch("/api/tutor/evaluate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  }).then((response) => readJsonResponse<LearningCheckEvaluation>(response));
+}
+
+function getNextReviewAt(status: LearningCheckStatus) {
+  const minutesByStatus: Record<LearningCheckStatus, number> = {
+    "got-it": 24 * 60,
+    "needs-practice": 60,
+    confused: 10
+  };
+
+  return new Date(Date.now() + minutesByStatus[status] * 60_000).toISOString();
+}
+
+function getLearningCheckStatusLabel(status: LearningCheckUiStatus) {
+  switch (status) {
+    case "got-it":
+      return "Got it";
+    case "needs-practice":
+      return "Needs practice";
+    case "confused":
+      return "Confused";
+    case "checking":
+      return "Checking";
+    case "unanswered":
+    default:
+      return "Awaiting answer";
+  }
+}
+
+function titleCaseLanguageName(value: string) {
+  return value
+    .split(/\s+/)
+    .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
+    .join(" ");
+}
+
+function getLanguageDisplayName(value: string | null | undefined) {
+  const language = value?.trim();
+
+  if (!language) {
+    return "Unknown";
+  }
+
+  const normalized = language.toLowerCase();
+  const knownLabel = LANGUAGE_LABELS[normalized];
+
+  if (knownLabel) {
+    return knownLabel;
+  }
+
+  try {
+    const locale = typeof navigator === "undefined" ? "en" : navigator.language || "en";
+    const displayName = new Intl.DisplayNames([locale], { type: "language" }).of(language);
+
+    if (displayName) {
+      return titleCaseLanguageName(displayName);
+    }
+  } catch {
+    // Fall through to the original value when the browser cannot parse the language code.
+  }
+
+  return language;
 }
 
 export default function Home() {
@@ -229,6 +394,9 @@ export default function Home() {
   const [materials, setMaterials] = useState<CapturedMaterial[]>([]);
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [learningChecks, setLearningChecks] = useState<LearningCheck[]>([]);
+  const learningChecksRef = useRef<LearningCheck[]>([]);
+  const [activeLearningCheckId, setActiveLearningCheckId] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const tutorAbortRef = useRef<AbortController | null>(null);
   const ttsAbortRef = useRef<AbortController | null>(null);
@@ -280,6 +448,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const [materialsOpen, setMaterialsOpen] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
 
   // Derived values
   const lastAssistantMessage = useMemo(
@@ -291,6 +460,13 @@ export default function Home() {
     [materials, selectedMaterialId]
   );
   const learningContext = selectedMaterial?.learningContext ?? null;
+  const activeLearningCheck = useMemo(
+    () =>
+      learningChecks.find(
+        (check): check is ActiveLearningCheck => check.id === activeLearningCheckId && isActiveLearningCheck(check)
+      ) ?? null,
+    [activeLearningCheckId, learningChecks]
+  );
 
   // Health check on mount
   useEffect(() => {
@@ -314,6 +490,10 @@ export default function Home() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    learningChecksRef.current = learningChecks;
+  }, [learningChecks]);
 
   function handleMaterialReady(material: CapturedInput) {
     setError("");
@@ -385,11 +565,13 @@ export default function Home() {
     setSettingsOpen(false);
     setSessionsOpen(false);
     setMaterialsOpen(false);
+    setProgressOpen(false);
   }
 
   function handleOpenSettings() {
     setSessionsOpen(false);
     setMaterialsOpen(false);
+    setProgressOpen(false);
     setSettingsOpen(true);
     void loadTtsUsage();
   }
@@ -397,6 +579,7 @@ export default function Home() {
   function handleOpenSessions() {
     setSettingsOpen(false);
     setMaterialsOpen(false);
+    setProgressOpen(false);
     setSessionsOpen(true);
     void loadSavedSessions();
   }
@@ -404,8 +587,16 @@ export default function Home() {
   function handleOpenMaterials() {
     setSettingsOpen(false);
     setSessionsOpen(false);
+    setProgressOpen(false);
     setMaterialsOpen(true);
     void loadSavedMaterials();
+  }
+
+  function handleOpenProgress() {
+    setSettingsOpen(false);
+    setSessionsOpen(false);
+    setMaterialsOpen(false);
+    setProgressOpen(true);
   }
 
   async function handleDeleteSession(nextSessionId: string) {
@@ -494,11 +685,14 @@ export default function Home() {
       setMaterials(loadedMaterials);
       setSelectedMaterialId(loadedMaterials[0]?.id ?? null);
       setMessages(data.messages);
+      setLearningChecks(data.learningChecks ?? []);
+      setActiveLearningCheckId((data.learningChecks ?? []).find(isActiveLearningCheck)?.id ?? null);
       setQuestion("");
       setPendingMaterials([]);
       setSettingsOpen(false);
       setSessionsOpen(false);
       setMaterialsOpen(false);
+      setProgressOpen(false);
       setPhase("learn");
       setStatus("Saved session loaded");
     } catch (nextError) {
@@ -576,6 +770,8 @@ export default function Home() {
       setSessionId(savedSessionId);
       setMaterials((current) => [...current, ...processedMaterials]);
       setSelectedMaterialId(processedMaterials[0]?.id ?? null);
+      setLearningChecks([]);
+      setActiveLearningCheckId(null);
       setMessages((current) => [
         ...current,
         makeMessage(
@@ -588,6 +784,7 @@ export default function Home() {
       setSettingsOpen(false);
       setSessionsOpen(false);
       setMaterialsOpen(false);
+      setProgressOpen(false);
       setPhase("learn");
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Material processing failed");
@@ -613,12 +810,15 @@ export default function Home() {
     setSessionId(null);
     setMaterials((current) => [...current, nextMaterial]);
     setSelectedMaterialId(nextMaterial.id);
+    setLearningChecks([]);
+    setActiveLearningCheckId(null);
     setMessages((current) => [...current, makeMessage("system", "Sample photosynthesis material loaded.")]);
     setStatus("Sample context ready");
     setError("");
     setSettingsOpen(false);
     setSessionsOpen(false);
     setMaterialsOpen(false);
+    setProgressOpen(false);
     setPhase("learn");
 
     void saveLearningSession({
@@ -634,19 +834,14 @@ export default function Home() {
         }
       ]
     })
-      .then((savedSessionId) => setSessionId(savedSessionId))
-      .catch(() => undefined);
-  }
+      .then((savedSessionId) => {
+        setSessionId(savedSessionId);
 
-  // ---- Add another image ----
-  function handleAddMaterial() {
-    setPendingMaterials([]);
-    setSettingsOpen(false);
-    setSessionsOpen(false);
-    setMaterialsOpen(false);
-    setPhase("capture");
-    setError("");
-    setStatus("Capture another page");
+        for (const check of learningChecksRef.current) {
+          void saveLearningCheckRequest(savedSessionId, check).catch(() => undefined);
+        }
+      })
+      .catch(() => undefined);
   }
 
   function handleNewSession() {
@@ -658,11 +853,14 @@ export default function Home() {
     setTutorStopped(false);
     setMaterials([]);
     setSelectedMaterialId(null);
+    setLearningChecks([]);
+    setActiveLearningCheckId(null);
     setMessages([]);
     setQuestion("");
     setSettingsOpen(false);
     setSessionsOpen(false);
     setMaterialsOpen(false);
+    setProgressOpen(false);
     setPhase("capture");
     setError("");
     setStatus("Ready");
@@ -676,13 +874,124 @@ export default function Home() {
     setStatus("Tutor response stopped");
   }
 
+  function createLearningCheck(retrievalQuestion: string) {
+    const questionText = retrievalQuestion.trim();
+
+    if (!questionText) {
+      return;
+    }
+
+    const nextCheck: LearningCheck = {
+      id: crypto.randomUUID(),
+      materialId: selectedMaterial?.id ?? null,
+      materialName: selectedMaterial?.name || "Current material",
+      concept: learningContext?.topic || "Current concept",
+      question: questionText,
+      answer: "",
+      status: "unanswered",
+      feedback: "",
+      confidence: null,
+      createdAt: new Date().toISOString(),
+      answeredAt: null,
+      nextReviewAt: null
+    };
+
+    setLearningChecks((current) => [nextCheck, ...current]);
+    setActiveLearningCheckId(nextCheck.id);
+    void saveLearningCheckRequest(sessionId, nextCheck).catch(() => undefined);
+  }
+
+  function handleSkipActiveLearningCheck() {
+    const checkId = activeLearningCheckId;
+
+    if (!checkId) {
+      return;
+    }
+
+    setLearningChecks((current) => current.filter((check) => check.id !== checkId));
+    setActiveLearningCheckId(null);
+    void deleteLearningCheckRequest(sessionId, checkId).catch(() => undefined);
+  }
+
+  async function evaluateActiveLearningCheck(check: LearningCheck, learnerAnswer: string) {
+    const activeSessionId = sessionId;
+    const checkingCheck: LearningCheck = {
+      ...check,
+      answer: learnerAnswer,
+      status: "checking"
+    };
+
+    setLearningChecks((current) =>
+      current.map((item) => (item.id === check.id ? checkingCheck : item))
+    );
+
+    try {
+      const checkLearningContext =
+        materials.find((material) => material.id === check.materialId)?.learningContext ?? learningContext;
+      const evaluation = await evaluateLearningCheckRequest({
+        learningContext: checkLearningContext,
+        retrievalQuestion: check.question,
+        learnerAnswer,
+        targetLanguage
+      });
+
+      const updatedCheck: LearningCheck = {
+        ...checkingCheck,
+        concept: evaluation.concept || checkingCheck.concept,
+        status: evaluation.status,
+        feedback: evaluation.feedback,
+        confidence: evaluation.confidence,
+        answeredAt: new Date().toISOString(),
+        nextReviewAt: getNextReviewAt(evaluation.status)
+      };
+
+      setLearningChecks((current) =>
+        current.map((item) => (item.id === check.id ? updatedCheck : item))
+      );
+      void saveLearningCheckRequest(activeSessionId, updatedCheck).catch(() => undefined);
+    } catch {
+      const updatedCheck: LearningCheck = {
+        ...checkingCheck,
+        status: "needs-practice",
+        feedback: "Review this idea once more, then try another short answer.",
+        confidence: 0.35,
+        answeredAt: new Date().toISOString(),
+        nextReviewAt: getNextReviewAt("needs-practice")
+      };
+
+      setLearningChecks((current) =>
+        current.map((item) => (item.id === check.id ? updatedCheck : item))
+      );
+      void saveLearningCheckRequest(activeSessionId, updatedCheck).catch(() => undefined);
+    } finally {
+      setActiveLearningCheckId((current) => (current === check.id ? null : current));
+    }
+  }
+
+  function handlePracticeConcept(concept: string) {
+    setProgressOpen(false);
+    setSettingsOpen(false);
+    setSessionsOpen(false);
+    setMaterialsOpen(false);
+    setPhase(materials.length > 0 ? "learn" : "capture");
+
+    if (materials.length > 0) {
+      void submitQuestion(`Quiz me on ${concept}. Ask one short retrieval question and wait for my answer.`, {
+        skipLearningCheck: true
+      });
+    }
+  }
+
   // ---- Question submission ----
-  async function submitQuestion(forcedQuestion?: string) {
+  async function submitQuestion(forcedQuestion?: string, options?: { skipLearningCheck?: boolean }) {
     const text = (forcedQuestion ?? question).trim();
 
     if (!text) {
       return;
     }
+
+    const checkToEvaluate =
+      !options?.skipLearningCheck && activeLearningCheck?.status === "unanswered" ? activeLearningCheck : null;
 
     setError("");
     setTutorStopped(false);
@@ -696,6 +1005,10 @@ export default function Home() {
     setMessages([...previousMessages, userMessage]);
     const controller = new AbortController();
     tutorAbortRef.current = controller;
+
+    if (checkToEvaluate) {
+      void evaluateActiveLearningCheck(checkToEvaluate, text);
+    }
 
     try {
       const tutorResponse = await fetch("/api/tutor/respond", {
@@ -728,6 +1041,7 @@ export default function Home() {
       setStatus("Preparing voice...");
 
       let assistantRevealed = false;
+      let learningCheckCreated = false;
       const revealAssistant = () => {
         if (assistantRevealed) {
           return;
@@ -737,14 +1051,26 @@ export default function Home() {
         setMessages((current) => [...current, assistantMessage]);
         void saveConversationMessages(activeSessionId, [userMessage, assistantMessage]).catch(() => undefined);
       };
+      const createLearningCheckAfterSpeech = () => {
+        if (learningCheckCreated || !assistantRevealed || controller.signal.aborted) {
+          return;
+        }
+
+        learningCheckCreated = true;
+        createLearningCheck(tutorResponse.followUpQuestion);
+      };
 
       const speechStarted = await speakText(assistantText, {
         onReadyToReveal: revealAssistant,
+        onSpeechComplete: createLearningCheckAfterSpeech,
         traceMessageId: assistantMessage.id
       });
 
-      if (!speechStarted && !controller.signal.aborted && !assistantRevealed) {
-        revealAssistant();
+      if (!speechStarted && !controller.signal.aborted) {
+        if (!assistantRevealed) {
+          revealAssistant();
+        }
+        createLearningCheckAfterSpeech();
       }
     } catch (nextError) {
       if (
@@ -892,7 +1218,10 @@ export default function Home() {
     }
   }
 
-  async function speakText(text: string, options?: { onReadyToReveal?: () => void; traceMessageId?: string }) {
+  async function speakText(
+    text: string,
+    options?: { onReadyToReveal?: () => void; onSpeechComplete?: () => void; traceMessageId?: string }
+  ) {
     if (!text.trim()) {
       options?.onReadyToReveal?.();
       return false;
@@ -906,6 +1235,9 @@ export default function Home() {
 
     const reveal = () => {
       options?.onReadyToReveal?.();
+    };
+    const completeSpeech = () => {
+      options?.onSpeechComplete?.();
     };
 
     try {
@@ -951,6 +1283,7 @@ export default function Home() {
             clearSpeechTrace();
             setTutorSpeaking(false);
             setStatus("Speech finished");
+            completeSpeech();
           }
         });
         audio.addEventListener("error", () => {
@@ -974,14 +1307,14 @@ export default function Home() {
         return true;
       }
 
-      const streamed = await speakWithStreamingTts(text, controller, reveal, options?.traceMessageId);
+      const streamed = await speakWithStreamingTts(text, controller, reveal, completeSpeech, options?.traceMessageId);
 
       if (streamed) {
         return true;
       }
 
       reveal();
-      if (speakWithBrowser(text, options?.traceMessageId)) {
+      if (speakWithBrowser(text, options?.traceMessageId, completeSpeech)) {
         setStatus("Playing browser speech");
         return true;
       }
@@ -1001,7 +1334,7 @@ export default function Home() {
       setError(nextError instanceof Error ? nextError.message : "Speech failed");
       reveal();
       setTutorSpeaking(true);
-      if (speakWithBrowser(text, options?.traceMessageId)) {
+      if (speakWithBrowser(text, options?.traceMessageId, completeSpeech)) {
         setStatus("Playing browser speech");
         return true;
       }
@@ -1018,6 +1351,7 @@ export default function Home() {
     text: string,
     controller: AbortController,
     reveal: () => void,
+    completeSpeech: () => void,
     traceMessageId?: string
   ) {
     try {
@@ -1048,7 +1382,13 @@ export default function Home() {
 
       reveal();
       setStatus("Playing audio");
-      return await playPcmStream(response, controller.signal, traceMessageId, text);
+      const played = await playPcmStream(response, controller.signal, traceMessageId, text);
+
+      if (played) {
+        completeSpeech();
+      }
+
+      return played;
     } catch (error) {
       if (
         (error instanceof Error && error.name === "AbortError") ||
@@ -1161,7 +1501,7 @@ export default function Home() {
     }
   }
 
-  function speakWithBrowser(text: string, traceMessageId?: string) {
+  function speakWithBrowser(text: string, traceMessageId?: string, completeSpeech?: () => void) {
     if (!("speechSynthesis" in window)) {
       setTutorSpeaking(false);
       setStatus("Speech playback is unavailable in this browser");
@@ -1188,6 +1528,7 @@ export default function Home() {
         clearSpeechTrace();
         setTutorSpeaking(false);
         setStatus("Speech finished");
+        completeSpeech?.();
       }
     };
     utterance.onerror = () => {
@@ -1210,26 +1551,18 @@ export default function Home() {
   ];
 
   const sessionTitle = learningContext?.topic || "Learning session";
-  const sessionLanguage = learningContext?.detectedLanguage || "English";
+  const sessionLanguage = getLanguageDisplayName(learningContext?.detectedLanguage || "English");
   const sessionPageCount = materials.length || 1;
-  const learnScreenOpen = !settingsOpen && !sessionsOpen && !materialsOpen;
+  const learnScreenOpen = !settingsOpen && !sessionsOpen && !materialsOpen && !progressOpen;
 
   const languageSelector = (
-    <div className="header-picker">
-      <Globe size={14} aria-hidden />
-      <select
-        value={targetLanguage}
-        disabled={busy}
-        onChange={(e) => setTargetLanguage(e.target.value)}
-        aria-label="Tutor language"
-      >
-        <option value="en">English</option>
-        <option value="zh-CN">Chinese</option>
-        <option value="es">Spanish</option>
-        <option value="hi">Hindi</option>
-        <option value="ms">Malay</option>
-      </select>
-    </div>
+    <LanguageMenu
+      value={targetLanguage}
+      disabled={busy}
+      onChange={setTargetLanguage}
+      className="header-language-menu"
+      ariaLabel="Tutor language"
+    />
   );
 
   const healthStatus = health && (
@@ -1280,7 +1613,11 @@ export default function Home() {
               <Folder size={20} aria-hidden />
               Materials
             </button>
-            <button className="landing-nav-item" type="button" disabled>
+            <button
+              className={`landing-nav-item ${progressOpen ? "active" : ""}`}
+              type="button"
+              onClick={handleOpenProgress}
+            >
               <BarChart3 size={20} aria-hidden />
               Progress
             </button>
@@ -1357,27 +1694,26 @@ export default function Home() {
               onTtsVoiceStyleChange={setTtsVoiceStyle}
               onRefreshTtsUsage={() => void loadTtsUsage()}
             />
+          ) : progressOpen ? (
+            <ProgressScreen
+              checks={learningChecks}
+              activeCheck={activeLearningCheck}
+              hasMaterials={materials.length > 0}
+              onOpenLearn={handleOpenLearn}
+              onPracticeConcept={handlePracticeConcept}
+            />
           ) : (
             <>
               <header className="landing-toolbar">
                 <div aria-hidden />
                 <div className="landing-toolbar-actions">
-                  <div className="landing-language-control">
-                    <Globe size={18} aria-hidden />
-                    <select
-                      value={targetLanguage}
-                      disabled={busy}
-                      onChange={(e) => setTargetLanguage(e.target.value)}
-                      aria-label="Tutor language"
-                    >
-                      <option value="en">English</option>
-                      <option value="zh-CN">Chinese</option>
-                      <option value="es">Spanish</option>
-                      <option value="hi">Hindi</option>
-                      <option value="ms">Malay</option>
-                    </select>
-                    <ChevronDown size={17} aria-hidden />
-                  </div>
+                  <LanguageMenu
+                    value={targetLanguage}
+                    disabled={busy}
+                    onChange={setTargetLanguage}
+                    className="landing-language-menu"
+                    ariaLabel="Tutor language"
+                  />
                   {healthStatus}
                 </div>
               </header>
@@ -1475,7 +1811,7 @@ export default function Home() {
             <button
               className={`landing-nav-item ${learnScreenOpen ? "active" : ""}`}
               type="button"
-              onClick={handleAddMaterial}
+              onClick={handleOpenLearn}
               disabled={busy}
             >
               <House size={20} aria-hidden />
@@ -1497,7 +1833,11 @@ export default function Home() {
               <Folder size={20} aria-hidden />
               Materials
             </button>
-            <button className="landing-nav-item" type="button" disabled>
+            <button
+              className={`landing-nav-item ${progressOpen ? "active" : ""}`}
+              type="button"
+              onClick={handleOpenProgress}
+            >
               <BarChart3 size={20} aria-hidden />
               Progress
             </button>
@@ -1574,6 +1914,14 @@ export default function Home() {
               onTtsVoiceStyleChange={setTtsVoiceStyle}
               onRefreshTtsUsage={() => void loadTtsUsage()}
             />
+          ) : progressOpen ? (
+            <ProgressScreen
+              checks={learningChecks}
+              activeCheck={activeLearningCheck}
+              hasMaterials={materials.length > 0}
+              onOpenLearn={handleOpenLearn}
+              onPracticeConcept={handlePracticeConcept}
+            />
           ) : (
             <>
               <header className="session-header">
@@ -1607,9 +1955,7 @@ export default function Home() {
                 <MaterialRail
                   materials={materials}
                   selectedMaterialId={selectedMaterial?.id ?? null}
-                  busy={busy}
                   onSelect={setSelectedMaterialId}
-                  onAdd={handleAddMaterial}
                 />
 
                 <ConversationPanel
@@ -1622,10 +1968,12 @@ export default function Home() {
                   tutorSpeaking={tutorSpeaking}
                   speechTrace={speechTrace}
                   understandingLevel={understandingLevel}
+                  activeLearningCheck={activeLearningCheck}
                   quickActions={quickActions}
                   onQuestionChange={setQuestion}
                   onSend={() => void submitQuestion()}
-                  onQuickAction={(text) => void submitQuestion(text)}
+                  onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
+                  onSkipLearningCheck={handleSkipActiveLearningCheck}
                   onStopResponding={handleStopTutorResponse}
                   onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
                   onSpeakLast={() =>
@@ -1696,9 +2044,7 @@ export default function Home() {
               <MaterialRail
                 materials={materials}
                 selectedMaterialId={selectedMaterial?.id ?? null}
-                busy={busy}
                 onSelect={setSelectedMaterialId}
-                onAdd={handleAddMaterial}
               />
 
               <ConversationPanel
@@ -1711,10 +2057,12 @@ export default function Home() {
                 tutorSpeaking={tutorSpeaking}
                 speechTrace={speechTrace}
                 understandingLevel={understandingLevel}
+                activeLearningCheck={activeLearningCheck}
                 quickActions={quickActions}
                 onQuestionChange={setQuestion}
                 onSend={() => void submitQuestion()}
-                onQuickAction={(text) => void submitQuestion(text)}
+                onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
+                onSkipLearningCheck={handleSkipActiveLearningCheck}
                 onStopResponding={handleStopTutorResponse}
                 onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
                 onSpeakLast={() =>
@@ -1827,18 +2175,108 @@ function getFiniteAudioDurationMs(audio: HTMLAudioElement) {
   return Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration * 1000 : undefined;
 }
 
+function LanguageMenu({
+  value,
+  disabled,
+  onChange,
+  className = "",
+  ariaLabel
+}: {
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+  className?: string;
+  ariaLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const selectedOption = LANGUAGE_OPTIONS.find((option) => option.value === value) ?? {
+    value,
+    label: getLanguageDisplayName(value)
+  };
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent | TouchEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className={`language-menu ${open ? "open" : ""} ${className}`} ref={menuRef}>
+      <button
+        className="language-menu-trigger"
+        type="button"
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+      >
+        <Globe size={18} aria-hidden />
+        <span>{selectedOption.label}</span>
+        <ChevronDown size={17} aria-hidden />
+      </button>
+
+      {open && (
+        <div className="language-menu-popover" role="listbox" aria-label={ariaLabel}>
+          {LANGUAGE_OPTIONS.map((option) => (
+            <button
+              className={`language-menu-option ${option.value === value ? "active" : ""}`}
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              key={option.value}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              <span>{option.label}</span>
+              {option.value === value && <CheckCircle2 size={15} aria-hidden />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MaterialRail({
   materials,
   selectedMaterialId,
-  busy,
-  onSelect,
-  onAdd
+  onSelect
 }: {
   materials: CapturedMaterial[];
   selectedMaterialId: string | null;
-  busy: boolean;
   onSelect: (id: string) => void;
-  onAdd: () => void;
 }) {
   const selectedMaterial = materials.find((material) => material.id === selectedMaterialId) ?? materials.at(-1);
 
@@ -1846,9 +2284,6 @@ function MaterialRail({
     <aside className="material-rail" aria-label="Submitted learning material">
       <div className="material-rail-header">
         <h2>Material</h2>
-        <button className="rail-icon-btn" type="button" onClick={onAdd} disabled={busy} aria-label="Add material">
-          <ExternalLink size={17} aria-hidden />
-        </button>
       </div>
 
       <div className="material-strip">
@@ -1879,7 +2314,7 @@ function MaterialRail({
           <p className="context-label">Page language</p>
           <p className="material-pill">
             <Globe size={14} aria-hidden />
-            {selectedMaterial.learningContext.detectedLanguage}
+            {getLanguageDisplayName(selectedMaterial.learningContext.detectedLanguage)}
           </p>
 
           <p className="context-label">Detected topic</p>
@@ -2024,6 +2459,33 @@ function formatSessionDate(value: string) {
 
   if (Number.isNaN(date.getTime())) {
     return "Unknown date";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function isScoredLearningCheck(check: LearningCheck): check is LearningCheck & { status: LearningCheckStatus } {
+  return check.status === "got-it" || check.status === "needs-practice" || check.status === "confused";
+}
+
+function isActiveLearningCheck(check: LearningCheck): check is ActiveLearningCheck {
+  return check.status === "unanswered" || check.status === "checking";
+}
+
+function formatReviewTime(value: string | null) {
+  if (!value) {
+    return "Not scheduled";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not scheduled";
   }
 
   return new Intl.DateTimeFormat(undefined, {
@@ -2281,6 +2743,181 @@ function MaterialsScreen({
           <h3>No saved materials yet</h3>
           <p>Start a learning session from an upload, camera photo, pasted image, or link to save it here.</p>
         </div>
+      )}
+    </div>
+  );
+}
+
+function ProgressScreen({
+  checks,
+  activeCheck,
+  hasMaterials,
+  onOpenLearn,
+  onPracticeConcept
+}: {
+  checks: LearningCheck[];
+  activeCheck: LearningCheck | null;
+  hasMaterials: boolean;
+  onOpenLearn: () => void;
+  onPracticeConcept: (concept: string) => void;
+}) {
+  const scoredChecks = checks.filter(isScoredLearningCheck);
+  const gotItCount = scoredChecks.filter((check) => check.status === "got-it").length;
+  const needsPracticeCount = scoredChecks.filter((check) => check.status === "needs-practice").length;
+  const confusedCount = scoredChecks.filter((check) => check.status === "confused").length;
+  const scheduledReviewCount = scoredChecks.filter((check) => check.nextReviewAt).length;
+  const accuracyPercent = scoredChecks.length > 0 ? Math.round((gotItCount / scoredChecks.length) * 100) : 0;
+  const conceptMap = new Map<string, LearningCheck[]>();
+
+  for (const check of scoredChecks) {
+    conceptMap.set(check.concept, [...(conceptMap.get(check.concept) ?? []), check]);
+  }
+
+  const concepts = Array.from(conceptMap.entries()).map(([concept, conceptChecks]) => {
+    const latest = conceptChecks[0];
+    const gotIt = conceptChecks.filter((check) => check.status === "got-it").length;
+
+    return {
+      concept,
+      checks: conceptChecks,
+      latest,
+      gotIt,
+      accuracy: Math.round((gotIt / conceptChecks.length) * 100)
+    };
+  });
+
+  return (
+    <div className="progress-screen">
+      <div className="sessions-screen-header">
+        <div>
+          <p className="settings-eyebrow">Retrieval practice</p>
+          <h2>Learning progress</h2>
+          <p>Progress is based on answers to tutor check questions, not on model-estimated understanding.</p>
+        </div>
+        <div className="sessions-header-actions">
+          <button className="session-primary-button" type="button" onClick={onOpenLearn}>
+            <PlayCircle size={17} aria-hidden />
+            {hasMaterials ? "Back to session" : "Start learning"}
+          </button>
+        </div>
+      </div>
+
+      {activeCheck && (
+        <section className="progress-active-card">
+          <div>
+            <span>Current check</span>
+            <h3>{activeCheck.question}</h3>
+            <p>Your next voice or text reply will tag this concept in progress.</p>
+          </div>
+          <strong>{activeCheck.concept}</strong>
+        </section>
+      )}
+
+      <div className="progress-stats-grid">
+        <div className="progress-stat-card">
+          <span>Answered checks</span>
+          <strong>{scoredChecks.length}</strong>
+        </div>
+        <div className="progress-stat-card got-it">
+          <span>Got it</span>
+          <strong>{gotItCount}</strong>
+        </div>
+        <div className="progress-stat-card needs-practice">
+          <span>Needs practice</span>
+          <strong>{needsPracticeCount}</strong>
+        </div>
+        <div className="progress-stat-card confused">
+          <span>Confused</span>
+          <strong>{confusedCount}</strong>
+        </div>
+      </div>
+
+      {checks.length === 0 ? (
+        <div className="sessions-empty">
+          <h3>No progress checks yet</h3>
+          <p>
+            Ask the tutor a question. After it replies, answer the follow-up question to build a concept-by-concept
+            progress record.
+          </p>
+        </div>
+      ) : (
+        <>
+          <section className="progress-summary-card">
+            <div>
+              <span>Current score</span>
+              <strong>{accuracyPercent}%</strong>
+              <p>
+                {scheduledReviewCount} concept{scheduledReviewCount === 1 ? "" : "s"} scheduled for spaced review.
+              </p>
+            </div>
+            <div className="progress-meter" aria-label={`${accuracyPercent}% got it`}>
+              <span style={{ width: `${accuracyPercent}%` }} />
+            </div>
+          </section>
+
+          {concepts.length > 0 ? (
+            <div className="progress-concept-grid">
+              {concepts.map((item) => (
+                <article className={`progress-concept-card ${item.latest.status}`} key={item.concept}>
+                  <div className="progress-concept-header">
+                    <div>
+                      <h3>{item.concept}</h3>
+                      <p>{item.checks.length} check{item.checks.length === 1 ? "" : "s"} answered</p>
+                    </div>
+                    <span className={`progress-status-pill ${item.latest.status}`}>
+                      {getLearningCheckStatusLabel(item.latest.status)}
+                    </span>
+                  </div>
+                  <p className="progress-question">{item.latest.question}</p>
+                  <p className="progress-feedback">{item.latest.feedback || "No feedback yet."}</p>
+                  <div className="progress-concept-footer">
+                    <span>{item.accuracy}% got it</span>
+                    <span>Review {formatReviewTime(item.latest.nextReviewAt)}</span>
+                  </div>
+                  {hasMaterials && (
+                    <button
+                      className="material-action-link primary"
+                      type="button"
+                      onClick={() => onPracticeConcept(item.concept)}
+                    >
+                      <HelpCircle size={16} aria-hidden />
+                      Practice
+                    </button>
+                  )}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="sessions-empty">
+              <h3>One check is waiting</h3>
+              <p>Answer the current tutor question in the conversation to turn it into a progress tag.</p>
+            </div>
+          )}
+
+          <section className="progress-history-card">
+            <div className="settings-card-title">
+              <Clock size={20} aria-hidden />
+              <div>
+                <h3>Recent checks</h3>
+                <p>Each row is based on a learner answer to one retrieval question.</p>
+              </div>
+            </div>
+            <div className="progress-history-list">
+              {checks.slice(0, 8).map((check) => (
+                <div className="progress-history-row" key={check.id}>
+                  <span className={`progress-status-dot ${check.status}`} aria-hidden />
+                  <div>
+                    <strong>{check.concept}</strong>
+                    <small>{check.answer || check.question}</small>
+                  </div>
+                  <span className={`progress-status-pill ${check.status}`}>
+                    {getLearningCheckStatusLabel(check.status)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
       )}
     </div>
   );

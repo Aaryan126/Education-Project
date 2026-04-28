@@ -1,0 +1,39 @@
+{
+  "name": "ai-learning-companion",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "node scripts/copy-vad-assets.mjs",
+    "prepare:vad-assets": "node scripts/copy-vad-assets.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "qa:frontend": "node scripts/qa-frontend.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "@google-cloud/text-to-speech": "^6.4.0",
+    "@ricky0123/vad-web": "^0.0.30",
+    "@supabase/supabase-js": "^2.104.1",
+    "lucide-react": "^1.11.0",
+    "mammoth": "^1.12.0",
+    "next": "latest",
+    "onnxruntime-web": "^1.24.3",
+    "openai": "latest",
+    "pdf-parse": "^2.4.5",
+    "react": "latest",
+    "react-dom": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "playwright": "^1.59.1",
+    "typescript": "latest"
+  }
+}

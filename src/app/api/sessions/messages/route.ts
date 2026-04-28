@@ -15,6 +15,12 @@ const requestSchema = z.object({
   messages: z.array(messageSchema).min(1)
 });
 
+const updateRequestSchema = z.object({
+  sessionId: z.string().uuid().nullable().optional(),
+  messageId: z.string().uuid(),
+  content: z.string().min(1)
+});
+
 export async function POST(request: Request) {
   try {
     const body = requestSchema.parse(await request.json());
@@ -48,5 +54,38 @@ export async function POST(request: Request) {
     return jsonOk({ persisted: true });
   } catch (error) {
     return jsonError("Unable to save messages.", 500, getErrorMessage(error));
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = updateRequestSchema.parse(await request.json());
+    const supabase = getSupabaseAdmin();
+
+    if (!supabase || !body.sessionId) {
+      return jsonOk({ persisted: false });
+    }
+
+    const ownerKey = getSupabaseOwnerKey();
+    const { error } = await supabase
+      .from("messages")
+      .update({ content: body.content })
+      .eq("owner_key", ownerKey)
+      .eq("session_id", body.sessionId)
+      .or(`client_id.eq.${body.messageId},id.eq.${body.messageId}`);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    await supabase
+      .from("sessions")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", body.sessionId)
+      .eq("owner_key", ownerKey);
+
+    return jsonOk({ persisted: true });
+  } catch (error) {
+    return jsonError("Unable to update message.", 500, getErrorMessage(error));
   }
 }

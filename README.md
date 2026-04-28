@@ -49,6 +49,10 @@ Phloem now tracks learning progress from retrieval practice instead of only mode
 
 The Progress screen groups saved checks by concept and shows status, feedback, score, and next review time. If Supabase is not configured or the `learning_checks` table has not been migrated yet, checks still work in memory for the current session.
 
+## Conversation Controls
+
+Each visible user and tutor message can be copied from the conversation panel. Messages can also be edited inline; edited content updates the local conversation state and is persisted to Supabase for saved sessions.
+
 ## Voice Settings
 
 `TTS_PROVIDER` controls the speech backend:
@@ -57,4 +61,4 @@ The Progress screen groups saved checks by concept and shows status, feedback, s
 - `openai`: OpenAI TTS, including streaming PCM.
 - `google`: Google Cloud Text-to-Speech, including streaming PCM.
 
-The UI exposes a male/female style preference. Provider-specific voice names are resolved in `src/lib/speech/tts.ts`.
+The UI exposes a male/female style preference and a speech-speed slider. The speed control applies to browser speech, MP3 playback, streaming PCM playback, and replay. Provider-specific voice names are resolved in `src/lib/speech/tts.ts`.

@@ -159,6 +159,11 @@ Three-tier provider architecture:
 - Male default: Google "en-US-Chirp3-HD-Orus" / OpenAI "onyx"
 - Female option: Google "en-US-Chirp3-HD-Aoede" / OpenAI "nova"
 
+**Speech speed:**
+- Settings exposes a speech-speed slider from 0.75x to 1.5x
+- Speed applies to browser speech, generated MP3 playback, streaming PCM playback, and replay
+- Speech trace timing is scaled to match the selected playback speed
+
 **Streaming support:**
 - `/api/speech/synthesize/stream` returns raw PCM audio stream
 - Client plays via Web Audio API (`AudioContext`) with chunked scheduling
@@ -267,6 +272,7 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 **Key UI components:**
 - `CameraCapture` -- Multi-input capture component with drag/drop, camera, paste, link
 - `ConversationPanel` -- Chat-like interface with message bubbles, quick action buttons ("Simplify this", "Give me a hint", "Summarize", "Ask a question"), voice recorder integration, speech trace visualization, stop/response controls
+- Message controls -- User and assistant messages can be copied or edited inline; saved-session edits are persisted server-side
 - `VoiceRecorder` -- Hands-free VAD microphone control with speech/start/end status, Smart Turn completion checks, and automatic transcription/submission
 - Phase navigation -- The current app uses the sidebar and view state for Capture/Learn navigation; there is no standalone `StepIndicator` component in the current UI
 - `MaterialRail` -- Thumbnail strip for multi-material sessions with selection and detail panel
@@ -397,6 +403,7 @@ Both providers share:
 | GET | `/api/sessions/[id]` | Load full session (materials + messages + progress checks) |
 | DELETE | `/api/sessions/[id]` | Delete session (cascade) |
 | POST | `/api/sessions/messages` | Save conversation messages |
+| PATCH | `/api/sessions/messages` | Update edited conversation message text |
 | POST | `/api/progress/checks` | Upsert a learning progress check |
 | DELETE | `/api/progress/checks` | Delete a skipped learning progress check |
 | GET | `/api/materials` | List saved materials library |
@@ -437,6 +444,8 @@ Both providers share:
 - [x] Direct-answer mode (toggleable)
 - [x] Quick-action buttons for common requests
 - [x] Abort/cancel in-flight tutor requests
+- [x] Copy user and assistant messages
+- [x] Edit previous user and assistant messages inline
 
 ### 7.4 Audio Interaction
 
@@ -449,6 +458,7 @@ Both providers share:
 - [x] Word-by-word speech trace / highlighting during playback
 - [x] Stop speech / stop response controls
 - [x] Re-play last assistant response
+- [x] Speech speed control for tutor voice playback
 
 ### 7.5 Session Management
 
@@ -478,6 +488,7 @@ Both providers share:
 - [x] Source language selector
 - [x] Direct-answer toggle
 - [x] TTS voice style (male/female)
+- [x] TTS speech speed
 - [x] TTS usage dashboard (monthly tracking)
 - [x] Health status indicator (API key configuration)
 

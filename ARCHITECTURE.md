@@ -4,7 +4,7 @@
 
 The main client experience lives in `src/app/page.tsx`. It owns session state, material processing, conversation state, TTS playback, speech tracing, and settings panels.
 
-`src/components/CameraCapture.tsx` handles material input. `src/components/ConversationPanel.tsx` renders messages, auto-scrolls the transcript, and highlights the active phrase during speech playback. `src/components/VoiceRecorder.tsx` manages hands-free microphone capture.
+`src/components/CameraCapture.tsx` handles material input. `src/components/ConversationPanel.tsx` renders messages, auto-scrolls the transcript, highlights the active phrase during speech playback, and provides per-message copy/edit controls. `src/components/VoiceRecorder.tsx` manages hands-free microphone capture.
 
 Learning progress state is also owned by `src/app/page.tsx`. A pending retrieval check is created only after the assistant message has been revealed and speech playback has completed. The next learner reply is evaluated, tagged to a concept, and surfaced in the Progress screen.
 
@@ -19,6 +19,7 @@ Learning progress state is also owned by `src/app/page.tsx`. A pending retrieval
 - `/api/speech/turn`: runs Smart Turn or falls back to VAD-only endpointing.
 - `/api/sessions`, `/api/materials`, `/api/usage/tts`: Supabase-backed persistence and usage tracking.
 - `/api/progress/checks`: upserts and deletes saved learning checks for persisted sessions.
+- `PATCH /api/sessions/messages`: updates edited message text for saved sessions.
 
 ## Hands-Free Voice Flow
 
@@ -35,6 +36,8 @@ If Smart Turn is disabled or unavailable, `/api/speech/turn` returns a VAD fallb
 ## Speech Output
 
 TTS is centralized in `src/lib/speech/tts.ts`. Browser TTS is the default fallback. Google and OpenAI can produce streaming PCM through `/api/speech/synthesize/stream`, which lets playback begin before the full response is generated. Usage tracking for paid providers is stored in `tts_usage_months`.
+
+The Settings screen owns a speech-speed preference. The client applies it at playback time through `HTMLAudioElement.playbackRate` for MP3 audio, `AudioBufferSourceNode.playbackRate` for streaming PCM chunks, and `SpeechSynthesisUtterance.rate` for browser speech. Speech tracing scales provider timings and estimated durations to match the selected rate.
 
 Speech tracing in the UI is estimated from text segmentation and audio playback progress. The UI highlights a short phrase window rather than a single word because the current providers do not return exact word boundary timestamps through this integration.
 

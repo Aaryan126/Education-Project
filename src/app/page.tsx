@@ -179,6 +179,10 @@ type ActiveLearningCheck = LearningCheck & {
   status: "unanswered" | "checking";
 };
 
+const DEFAULT_TTS_SPEECH_RATE = 1;
+const MIN_TTS_SPEECH_RATE = 0.75;
+const MAX_TTS_SPEECH_RATE = 1.5;
+
 const LANGUAGE_OPTIONS = [
   { value: "en", label: "English" },
   { value: "zh-CN", label: "Chinese" },
@@ -271,6 +275,22 @@ async function saveConversationMessages(sessionId: string | null, messages: Conv
   }).then((response) => readJsonResponse<{ persisted: boolean }>(response));
 }
 
+async function updateConversationMessageRequest(
+  sessionId: string | null,
+  messageId: string | undefined,
+  content: string
+) {
+  if (!sessionId || !messageId || !content.trim()) {
+    return;
+  }
+
+  await fetch("/api/sessions/messages", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId, messageId, content })
+  }).then((response) => readJsonResponse<{ persisted: boolean }>(response));
+}
+
 async function deleteSavedSessionRequest(sessionId: string) {
   await fetch(`/api/sessions/${sessionId}`, {
     method: "DELETE"
@@ -334,6 +354,25 @@ function getNextReviewAt(status: LearningCheckStatus) {
   };
 
   return new Date(Date.now() + minutesByStatus[status] * 60_000).toISOString();
+}
+
+function clampTtsSpeechRate(value: number) {
+  if (!Number.isFinite(value)) {
+    return DEFAULT_TTS_SPEECH_RATE;
+  }
+
+  return Math.min(MAX_TTS_SPEECH_RATE, Math.max(MIN_TTS_SPEECH_RATE, value));
+}
+
+function scaleSpeechTimings(timings: SpeechTimingPoint[] | undefined, speechRate: number) {
+  if (!timings || timings.length === 0 || speechRate === 1) {
+    return timings;
+  }
+
+  return timings.map((timing) => ({
+    ...timing,
+    timeMs: timing.timeMs / speechRate
+  }));
 }
 
 function getLearningCheckStatusLabel(status: LearningCheckUiStatus) {
@@ -422,6 +461,7 @@ export default function Home() {
   const [targetLanguage, setTargetLanguage] = useState("en");
   const [sourceLanguage, setSourceLanguage] = useState("auto");
   const [ttsVoiceStyle, setTtsVoiceStyle] = useState<TtsVoiceStyle>("male");
+  const [ttsSpeechRate, setTtsSpeechRate] = useState(DEFAULT_TTS_SPEECH_RATE);
   const [understandingLevel, setUnderstandingLevel] = useState<UnderstandingLevel>("medium");
   const [allowDirectAnswer, setAllowDirectAnswer] = useState(false);
 
@@ -982,6 +1022,19 @@ export default function Home() {
     }
   }
 
+  function handleEditMessage(messageId: string, content: string) {
+    const nextContent = content.trim();
+
+    if (!nextContent) {
+      return;
+    }
+
+    setMessages((current) =>
+      current.map((message) => (message.id === messageId ? { ...message, content: nextContent } : message))
+    );
+    void updateConversationMessageRequest(sessionId, messageId, nextContent).catch(() => undefined);
+  }
+
   // ---- Question submission ----
   async function submitQuestion(forcedQuestion?: string, options?: { skipLearningCheck?: boolean }) {
     const text = (forcedQuestion ?? question).trim();
@@ -1229,6 +1282,7 @@ export default function Home() {
 
     stopTutorSpeech();
     const controller = new AbortController();
+    const speechRate = clampTtsSpeechRate(ttsSpeechRate);
     ttsAbortRef.current = controller;
     setTutorSpeaking(true);
     setStatus("Preparing voice...");
@@ -1276,6 +1330,7 @@ export default function Home() {
       if (result.audioBase64 && result.format) {
         reveal();
         const audio = new Audio(`data:audio/${result.format};base64,${result.audioBase64}`);
+        audio.playbackRate = speechRate;
         activeAudioRef.current = audio;
         audio.addEventListener("ended", () => {
           if (activeAudioRef.current === audio) {
@@ -1295,13 +1350,17 @@ export default function Home() {
           }
         });
         audio.addEventListener("durationchange", () => {
-          updateSpeechTraceDuration(getFiniteAudioDurationMs(audio) ?? estimateSpeechTraceDurationMs(text));
+          const durationMs = getFiniteAudioDurationMs(audio);
+          updateSpeechTraceDuration(
+            durationMs ? durationMs / speechRate : estimateSpeechTraceDurationMs(text) / speechRate
+          );
         });
         await audio.play();
+        const audioDurationMs = getFiniteAudioDurationMs(audio);
         startSpeechTrace(options?.traceMessageId, text, {
-          durationMs: getFiniteAudioDurationMs(audio),
+          durationMs: audioDurationMs ? audioDurationMs / speechRate : undefined,
           startedAt: performance.now(),
-          timings: result.timings
+          timings: scaleSpeechTimings(result.timings, speechRate)
         });
         setStatus(result.timings?.length ? "Playing synced audio" : "Playing audio");
         return true;
@@ -1382,7 +1441,13 @@ export default function Home() {
 
       reveal();
       setStatus("Playing audio");
-      const played = await playPcmStream(response, controller.signal, traceMessageId, text);
+      const played = await playPcmStream(
+        response,
+        controller.signal,
+        traceMessageId,
+        text,
+        clampTtsSpeechRate(ttsSpeechRate)
+      );
 
       if (played) {
         completeSpeech();
@@ -1402,7 +1467,13 @@ export default function Home() {
     }
   }
 
-  async function playPcmStream(response: Response, signal: AbortSignal, traceMessageId?: string, text?: string) {
+  async function playPcmStream(
+    response: Response,
+    signal: AbortSignal,
+    traceMessageId?: string,
+    text?: string,
+    speechRate = DEFAULT_TTS_SPEECH_RATE
+  ) {
     const body = response.body;
     const AudioContextConstructor = getAudioContextConstructor();
     const sampleRate = Number(response.headers.get("x-tts-sample-rate") || "24000");
@@ -1442,18 +1513,19 @@ export default function Home() {
         const audioBuffer = pcm16BytesToAudioBuffer(audioContext, bytes.subarray(0, playableByteLength), sampleRate);
         const source = audioContext.createBufferSource();
         source.buffer = audioBuffer;
+        source.playbackRate.value = speechRate;
         source.connect(audioContext.destination);
 
         const startAt = Math.max(nextStartTime, audioContext.currentTime + 0.02);
         const firstScheduledBuffer = playbackStartTime === null;
         playbackStartTime = playbackStartTime ?? startAt;
         source.start(startAt);
-        nextStartTime = startAt + audioBuffer.duration;
+        nextStartTime = startAt + audioBuffer.duration / speechRate;
 
         if (firstScheduledBuffer && text) {
           const startDelayMs = Math.max(0, (startAt - audioContext.currentTime) * 1000);
           startSpeechTrace(traceMessageId, text, {
-            durationMs: audioBuffer.duration * 1000,
+            durationMs: (audioBuffer.duration * 1000) / speechRate,
             startedAt: performance.now() + startDelayMs
           });
         }
@@ -1512,7 +1584,7 @@ export default function Home() {
     const utterance = new SpeechSynthesisUtterance(text);
     speechUtteranceRef.current = utterance;
     utterance.lang = targetLanguage;
-    utterance.rate = 0.92;
+    utterance.rate = clampTtsSpeechRate(ttsSpeechRate);
     utterance.pitch = ttsVoiceStyle === "female" ? 1.05 : 0.94;
     startSpeechTrace(traceMessageId, text, { manual: true });
     utterance.onboundary = (event) => {
@@ -1683,6 +1755,7 @@ export default function Home() {
               sourceLanguage={sourceLanguage}
               allowDirectAnswer={allowDirectAnswer}
               ttsVoiceStyle={ttsVoiceStyle}
+              ttsSpeechRate={ttsSpeechRate}
               ttsProvider={health?.ttsProvider || "browser"}
               ttsUsage={ttsUsage}
               ttsUsageLoading={ttsUsageLoading}
@@ -1692,6 +1765,7 @@ export default function Home() {
               onSourceLanguageChange={setSourceLanguage}
               onAllowDirectAnswerChange={setAllowDirectAnswer}
               onTtsVoiceStyleChange={setTtsVoiceStyle}
+              onTtsSpeechRateChange={(value) => setTtsSpeechRate(clampTtsSpeechRate(value))}
               onRefreshTtsUsage={() => void loadTtsUsage()}
             />
           ) : progressOpen ? (
@@ -1903,6 +1977,7 @@ export default function Home() {
               sourceLanguage={sourceLanguage}
               allowDirectAnswer={allowDirectAnswer}
               ttsVoiceStyle={ttsVoiceStyle}
+              ttsSpeechRate={ttsSpeechRate}
               ttsProvider={health?.ttsProvider || "browser"}
               ttsUsage={ttsUsage}
               ttsUsageLoading={ttsUsageLoading}
@@ -1912,6 +1987,7 @@ export default function Home() {
               onSourceLanguageChange={setSourceLanguage}
               onAllowDirectAnswerChange={setAllowDirectAnswer}
               onTtsVoiceStyleChange={setTtsVoiceStyle}
+              onTtsSpeechRateChange={(value) => setTtsSpeechRate(clampTtsSpeechRate(value))}
               onRefreshTtsUsage={() => void loadTtsUsage()}
             />
           ) : progressOpen ? (
@@ -1971,6 +2047,7 @@ export default function Home() {
                   activeLearningCheck={activeLearningCheck}
                   quickActions={quickActions}
                   onQuestionChange={setQuestion}
+                  onEditMessage={handleEditMessage}
                   onSend={() => void submitQuestion()}
                   onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
                   onSkipLearningCheck={handleSkipActiveLearningCheck}
@@ -2060,6 +2137,7 @@ export default function Home() {
                 activeLearningCheck={activeLearningCheck}
                 quickActions={quickActions}
                 onQuestionChange={setQuestion}
+                onEditMessage={handleEditMessage}
                 onSend={() => void submitQuestion()}
                 onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
                 onSkipLearningCheck={handleSkipActiveLearningCheck}
@@ -2928,6 +3006,7 @@ function SettingsScreen({
   sourceLanguage,
   allowDirectAnswer,
   ttsVoiceStyle,
+  ttsSpeechRate,
   ttsProvider,
   ttsUsage,
   ttsUsageLoading,
@@ -2937,12 +3016,14 @@ function SettingsScreen({
   onSourceLanguageChange,
   onAllowDirectAnswerChange,
   onTtsVoiceStyleChange,
+  onTtsSpeechRateChange,
   onRefreshTtsUsage
 }: {
   targetLanguage: string;
   sourceLanguage: string;
   allowDirectAnswer: boolean;
   ttsVoiceStyle: TtsVoiceStyle;
+  ttsSpeechRate: number;
   ttsProvider: string;
   ttsUsage: TtsUsageResponse | null;
   ttsUsageLoading: boolean;
@@ -2952,6 +3033,7 @@ function SettingsScreen({
   onSourceLanguageChange: (value: string) => void;
   onAllowDirectAnswerChange: (checked: boolean) => void;
   onTtsVoiceStyleChange: (value: TtsVoiceStyle) => void;
+  onTtsSpeechRateChange: (value: number) => void;
   onRefreshTtsUsage: () => void;
 }) {
   const activeTtsLabel =
@@ -3056,6 +3138,23 @@ function SettingsScreen({
               <option value="female">Warm female</option>
             </select>
           </label>
+
+          <label className="settings-field">
+            <span>Speech speed</span>
+            <div className="settings-range-row">
+              <input
+                type="range"
+                min={MIN_TTS_SPEECH_RATE}
+                max={MAX_TTS_SPEECH_RATE}
+                step="0.05"
+                value={ttsSpeechRate}
+                disabled={busy}
+                onChange={(event) => onTtsSpeechRateChange(Number(event.target.value))}
+              />
+              <strong>{ttsSpeechRate.toFixed(2)}x</strong>
+            </div>
+            <small className="settings-field-note">Applies to replay, browser speech, MP3, and streaming voice.</small>
+          </label>
         </section>
 
         <section className="settings-card wide">
@@ -3119,7 +3218,7 @@ function SettingsScreen({
             <Folder size={20} aria-hidden />
             <div>
               <h3>Saved sessions</h3>
-              <p>When Supabase is configured, sessions, materials, and tutor messages are saved server-side.</p>
+              <p>When Supabase is configured, sessions, materials, messages, and progress checks are saved.</p>
             </div>
           </div>
 

@@ -13,6 +13,7 @@ import {
   ExternalLink,
   FileText,
   Folder,
+  Gauge,
   Globe,
   Headphones,
   HelpCircle,
@@ -232,6 +233,7 @@ type SessionProgressCache = {
 const DEFAULT_TTS_SPEECH_RATE = 1;
 const MIN_TTS_SPEECH_RATE = 0.75;
 const MAX_TTS_SPEECH_RATE = 1.5;
+const TTS_SPEECH_RATE_STEP = 0.25;
 const LAST_SESSION_STORAGE_KEY = "phloem:last-session-id";
 const LISTEN_MODE_STORAGE_KEY = "phloem:listen-mode";
 const LISTEN_TEXT_SIZE_STORAGE_KEY = "phloem:listen-text-size-step";
@@ -748,6 +750,12 @@ export default function Home() {
       // localStorage can be unavailable in private or restricted browser modes.
     }
   }, [listenTextSizeStep]);
+
+  useEffect(() => {
+    if (activeAudioRef.current) {
+      activeAudioRef.current.playbackRate = clampTtsSpeechRate(ttsSpeechRate);
+    }
+  }, [ttsSpeechRate]);
 
   useEffect(() => {
     return () => {
@@ -2171,8 +2179,15 @@ export default function Home() {
         voiceRecorder={voiceRecorderControl}
         promptText={listenVisiblePrompt}
         textSizeStep={listenTextSizeStep}
+        speechRate={ttsSpeechRate}
         onDecreaseTextSize={() => setListenTextSizeStep((current) => clampListenTextSizeStep(current - 1))}
         onIncreaseTextSize={() => setListenTextSizeStep((current) => clampListenTextSizeStep(current + 1))}
+        onDecreaseSpeechRate={() =>
+          setTtsSpeechRate((current) => clampTtsSpeechRate(current - TTS_SPEECH_RATE_STEP))
+        }
+        onIncreaseSpeechRate={() =>
+          setTtsSpeechRate((current) => clampTtsSpeechRate(current + TTS_SPEECH_RATE_STEP))
+        }
         onQuestionChange={setQuestion}
         onSend={() => void submitQuestion()}
         onSkipLearningCheck={handleSkipActiveLearningCheck}
@@ -3088,8 +3103,11 @@ function ListenModeSession({
   voiceRecorder,
   promptText,
   textSizeStep,
+  speechRate,
   onDecreaseTextSize,
   onIncreaseTextSize,
+  onDecreaseSpeechRate,
+  onIncreaseSpeechRate,
   onQuestionChange,
   onSend,
   onSkipLearningCheck,
@@ -3112,8 +3130,11 @@ function ListenModeSession({
   voiceRecorder: ReactNode;
   promptText: string;
   textSizeStep: number;
+  speechRate: number;
   onDecreaseTextSize: () => void;
   onIncreaseTextSize: () => void;
+  onDecreaseSpeechRate: () => void;
+  onIncreaseSpeechRate: () => void;
   onQuestionChange: (question: string) => void;
   onSend: () => void;
   onSkipLearningCheck: () => void;
@@ -3137,6 +3158,8 @@ function ListenModeSession({
         : "Press the microphone";
   const currentPrompt = activeLearningCheck?.question || latestAssistant?.content || promptText;
   const clampedTextSizeStep = clampListenTextSizeStep(textSizeStep);
+  const clampedSpeechRate = clampTtsSpeechRate(speechRate);
+  const speechRateLabel = `${Number.isInteger(clampedSpeechRate) ? clampedSpeechRate.toFixed(0) : clampedSpeechRate.toFixed(2).replace(/0$/, "")}x`;
 
   return (
     <main className="listen-shell listen-session-shell listen-one-screen">
@@ -3178,6 +3201,32 @@ function ListenModeSession({
               title="Make tutor text bigger"
             >
               A+
+            </button>
+          </div>
+          <div className="one-button-speed-controls" aria-label="Tutor voice speed">
+            <span className="one-button-speed-icon" aria-hidden>
+              <Gauge size={19} />
+            </span>
+            <button
+              type="button"
+              onClick={onDecreaseSpeechRate}
+              disabled={clampedSpeechRate <= MIN_TTS_SPEECH_RATE}
+              aria-label="Make tutor voice slower"
+              title="Make tutor voice slower"
+            >
+              -
+            </button>
+            <span className="one-button-speed-value" aria-live="polite">
+              {speechRateLabel}
+            </span>
+            <button
+              type="button"
+              onClick={onIncreaseSpeechRate}
+              disabled={clampedSpeechRate >= MAX_TTS_SPEECH_RATE}
+              aria-label="Make tutor voice faster"
+              title="Make tutor voice faster"
+            >
+              +
             </button>
           </div>
         </div>

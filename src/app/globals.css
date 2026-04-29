@@ -4876,6 +4876,8 @@ select:disabled {
   align-items: center;
   justify-content: center;
   justify-self: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .one-button-top-actions {
@@ -5057,7 +5059,27 @@ select:disabled {
   gap: 6px;
 }
 
-.one-button-text-size-controls button {
+.one-button-speed-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  border: 1px solid #dce3df;
+  border-radius: 8px;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.one-button-speed-icon {
+  width: 30px;
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  color: #344054;
+}
+
+.one-button-text-size-controls button,
+.one-button-speed-controls button {
   width: 46px;
   min-height: 38px;
   border-radius: 8px;
@@ -5073,7 +5095,27 @@ select:disabled {
   font-size: 22px;
 }
 
-.one-button-text-size-controls button:disabled {
+.one-button-speed-controls button {
+  width: 36px;
+  min-height: 36px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  padding-bottom: 2px;
+}
+
+.one-button-speed-value {
+  min-width: 42px;
+  text-align: center;
+  color: #101828;
+  font-size: 16px;
+  line-height: 36px;
+  font-weight: 820;
+}
+
+.one-button-text-size-controls button:disabled,
+.one-button-speed-controls button:disabled {
   opacity: 0.42;
   cursor: not-allowed;
 }
@@ -5295,6 +5337,19 @@ select:disabled {
   .one-button-text-size-controls button {
     width: 42px;
     min-height: 34px;
+  }
+
+  .one-button-speed-controls {
+    min-height: 40px;
+  }
+
+  .one-button-speed-icon {
+    min-height: 32px;
+  }
+
+  .one-button-speed-controls button {
+    width: 34px;
+    min-height: 32px;
   }
 
   .one-button-orb {

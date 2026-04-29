@@ -95,6 +95,24 @@ try {
     });
   });
 
+  await page.route("**/api/vision/extract", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        learningContext: {
+          detectedLanguage: "English",
+          extractedText: "Photosynthesis is how plants make food using light, water, and carbon dioxide.",
+          topic: "Photosynthesis",
+          summary: "Plants use light, water, and carbon dioxide to make food.",
+          diagramNotes: "",
+          suggestedQuestion: "What do plants need for photosynthesis?",
+          confidence: 0.9
+        }
+      })
+    });
+  });
+
   await page.route("**/api/speech/synthesize", async (route) => {
     await route.fulfill({
       status: 200,
@@ -119,7 +137,12 @@ try {
   });
 
   await page.goto(baseUrl, { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: /math problem/i }).click();
+  await page.locator("input.hidden-file-input").setInputFiles({
+    name: "photosynthesis.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("qa image")
+  });
+  await page.getByRole("button", { name: /start learning session/i }).click();
   await page.getByText(/Tutor Conversation/i).waitFor({ state: "visible" });
   await page.getByPlaceholder(/ask a question/i).fill("What is photosynthesis?");
   await page.getByRole("button", { name: /^send message$/i }).click();

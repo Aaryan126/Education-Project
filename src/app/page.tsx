@@ -6,7 +6,6 @@ import {
   AlertCircle,
   BarChart3,
   BookOpen,
-  Calculator,
   CheckCircle2,
   ChevronDown,
   Clock,
@@ -2354,7 +2353,7 @@ export default function Home() {
                   Upload a page, take a photo, or select a file — I&apos;ll help you understand it.
                 </p>
 
-                <div className="landing-upload-panel">
+                <div className="landing-upload-panel landing-upload-panel-tall">
                   <CameraCapture busy={busy} onMaterialReady={handleMaterialReady} />
 
                   {pendingMaterials.length > 0 && (
@@ -2365,57 +2364,9 @@ export default function Home() {
                       onStart={() => void handleStartSession()}
                     />
                   )}
-
-                  {pendingMaterials.length === 0 && (
-                    <div className="example-section">
-                      <h3>Try with an example</h3>
-                      <div className="example-grid">
-                        <button className="example-card" type="button" onClick={handleUseSample} disabled={busy}>
-                          <span className="example-icon math">
-                            <Calculator size={22} aria-hidden />
-                          </span>
-                          <span>
-                            <strong>Math problem</strong>
-                            <small>Solve step-by-step</small>
-                          </span>
-                        </button>
-                        <button className="example-card" type="button" onClick={handleUseSample} disabled={busy}>
-                          <span className="example-icon paper">
-                            <FileText size={22} aria-hidden />
-                          </span>
-                          <span>
-                            <strong>Research paper</strong>
-                            <small>Summarize key points</small>
-                          </span>
-                        </button>
-                        <button className="example-card" type="button" onClick={handleUseSample} disabled={busy}>
-                          <span className="example-icon diagram">
-                            <BarChart3 size={22} aria-hidden />
-                          </span>
-                          <span>
-                            <strong>Diagram</strong>
-                            <small>Explain this image</small>
-                          </span>
-                        </button>
-                        <button className="example-card" type="button" onClick={handleUseSample} disabled={busy}>
-                          <span className="example-icon notes">
-                            <BookOpen size={22} aria-hidden />
-                          </span>
-                          <span>
-                            <strong>Study notes</strong>
-                            <small>Quiz me on this</small>
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
               </div>
-
-              <button className="landing-help-button" type="button" aria-label="Open help">
-                <HelpCircle size={24} aria-hidden />
-              </button>
             </>
           )}
         </section>

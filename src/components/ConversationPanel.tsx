@@ -272,7 +272,6 @@ export function ConversationPanel({
                         aria-label="Copy message"
                       >
                         <Copy size={13} aria-hidden />
-                        {copiedMessageId === message.id ? "Copied" : "Copy"}
                       </button>
                       <button
                         type="button"
@@ -282,7 +281,6 @@ export function ConversationPanel({
                         aria-label="Edit message"
                       >
                         <Pencil size={13} aria-hidden />
-                        Edit
                       </button>
                     </div>
                   </>

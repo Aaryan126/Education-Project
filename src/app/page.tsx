@@ -241,6 +241,7 @@ const TTS_SPEECH_RATE_STEP = 0.25;
 const LAST_SESSION_STORAGE_KEY = "phloem:last-session-id";
 const LISTEN_MODE_STORAGE_KEY = "phloem:listen-mode";
 const LISTEN_TEXT_SIZE_STORAGE_KEY = "phloem:listen-text-size-step";
+const DEFAULT_LISTEN_MODE = true;
 const MAX_LISTEN_TEXT_SIZE_STEP = 3;
 const SESSION_PROGRESS_STORAGE_PREFIX = "phloem:session-progress:";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -658,7 +659,7 @@ export default function Home() {
   const [materialsError, setMaterialsError] = useState("");
   const [ttsUsageLoading, setTtsUsageLoading] = useState(false);
   const [ttsUsageError, setTtsUsageError] = useState("");
-  const [listenMode, setListenMode] = useState(false);
+  const [listenMode, setListenMode] = useState(DEFAULT_LISTEN_MODE);
   const [listenTextSizeStep, setListenTextSizeStep] = useState(0);
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
 
@@ -719,13 +720,14 @@ export default function Home() {
 
       try {
         listenModeStorageReadyRef.current = true;
-        setListenMode(window.localStorage.getItem(LISTEN_MODE_STORAGE_KEY) === "1");
+        const storedListenMode = window.localStorage.getItem(LISTEN_MODE_STORAGE_KEY);
+        setListenMode(storedListenMode === null ? DEFAULT_LISTEN_MODE : storedListenMode === "1");
         setListenTextSizeStep(
           clampListenTextSizeStep(Number(window.localStorage.getItem(LISTEN_TEXT_SIZE_STORAGE_KEY) ?? 0))
         );
       } catch {
         listenModeStorageReadyRef.current = true;
-        setListenMode(false);
+        setListenMode(DEFAULT_LISTEN_MODE);
         setListenTextSizeStep(0);
       }
     }, 0);
@@ -2251,7 +2253,7 @@ export default function Home() {
             </button>
             <button className="landing-nav-item listen-mode-entry" type="button" onClick={handleOpenListenMode}>
               <Headphones size={20} aria-hidden />
-              Listen Mode
+              Voice Learning
             </button>
             <button
               className={`landing-nav-item ${sessionsOpen ? "active" : ""}`}
@@ -2291,10 +2293,10 @@ export default function Home() {
             <div className="leaf-badge">
               <Leaf size={34} aria-hidden />
             </div>
-            <h2>Learn more effectively with Phloem</h2>
-            <p>Upload materials, ask questions, and get personalized help.</p>
-            <button className="sidebar-outline-button" type="button">
-              Learn how it works
+            <h2>Progress dashboard</h2>
+            <p>Review sessions, materials, and concept progress.</p>
+            <button className="sidebar-outline-button" type="button" onClick={handleOpenListenMode}>
+              Open Voice Learning
             </button>
           </div>
 
@@ -2368,7 +2370,7 @@ export default function Home() {
                 <div className="landing-toolbar-actions">
                   <button className="listen-toolbar-button" type="button" onClick={handleOpenListenMode}>
                     <Headphones size={18} aria-hidden />
-                    Listen Mode
+                    Voice Learning
                   </button>
                   <LanguageMenu
                     value={targetLanguage}
@@ -2434,7 +2436,7 @@ export default function Home() {
             </button>
             <button className="landing-nav-item listen-mode-entry" type="button" onClick={handleOpenListenMode}>
               <Headphones size={20} aria-hidden />
-              Listen Mode
+              Voice Learning
             </button>
             <button
               className={`landing-nav-item ${sessionsOpen ? "active" : ""}`}
@@ -2474,10 +2476,10 @@ export default function Home() {
             <div className="leaf-badge">
               <Leaf size={34} aria-hidden />
             </div>
-            <h2>Learn more effectively with Phloem</h2>
-            <p>Upload materials, ask questions, and get personalized help.</p>
-            <button className="sidebar-outline-button" type="button">
-              Learn how it works
+            <h2>Progress dashboard</h2>
+            <p>Review sessions, materials, and concept progress.</p>
+            <button className="sidebar-outline-button" type="button" onClick={handleOpenListenMode}>
+              Open Voice Learning
             </button>
           </div>
 
@@ -2561,7 +2563,7 @@ export default function Home() {
                 <div className="session-actions">
                   <button className="session-action-button listen-toolbar-button" type="button" onClick={handleOpenListenMode}>
                     <Headphones size={17} aria-hidden />
-                    Listen Mode
+                    Voice Learning
                   </button>
                   <button className="session-action-button" type="button">
                     <Share2 size={17} aria-hidden />
@@ -3142,8 +3144,8 @@ function ListenModeCapture({
         <div className="listen-brand">
           <div className="brand-mark">P</div>
           <div>
-            <h1>Listen Mode</h1>
-            <p>Voice-first learning</p>
+            <h1>Voice Learning</h1>
+            <p>Learner mode</p>
           </div>
         </div>
 
@@ -3158,7 +3160,7 @@ function ListenModeCapture({
           {healthStatus}
           <button className="listen-secondary-button" type="button" onClick={onCloseListenMode}>
             <LayoutDashboard size={18} aria-hidden />
-            Full dashboard
+            Progress dashboard
           </button>
         </div>
       </header>
@@ -3166,7 +3168,7 @@ function ListenModeCapture({
       <section className="listen-capture-stage">
         <div className="listen-capture-single">
           <div className="listen-capture-heading">
-            <h2>{hasPendingMaterial ? "Ready to listen" : "Upload your page"}</h2>
+            <h2>{hasPendingMaterial ? "Ready to listen" : "Show me your page"}</h2>
             <p>{hasPendingMaterial ? "I will read it and help you by voice." : "I will read it and help you by voice."}</p>
           </div>
 
@@ -3420,7 +3422,7 @@ function ListenModeSession({
         <div className="one-button-top-actions">
           <button type="button" onClick={onCloseListenMode}>
             <LayoutDashboard size={18} aria-hidden />
-            Dashboard
+            Progress dashboard
           </button>
           <button type="button" onClick={onNewSession}>
             <PlusSquare size={18} aria-hidden />

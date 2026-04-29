@@ -14,9 +14,9 @@ Phloem is a Next.js learning companion that turns a captured image, PDF, or Word
 8. In hands-free mode, browser Silero VAD segments speech and `/api/speech/turn` uses Smart Turn when available before transcription.
 9. Voice answers attach lightweight interaction signals, such as incomplete pauses, long-silence fallback, short or numeric answer flags, and uncertainty markers, so tutor feedback can be more supportive without changing correctness rules by itself.
 
-## Listen Mode
+## Voice Learning
 
-Phloem includes an alternate voice-first UI for the core low-literacy audience. The normal dashboard remains available for users who want full session controls, materials, progress, and settings. Listen Mode strips the active learning flow down to a one-screen capture and one-button conversation experience:
+Phloem defaults to a voice-first learner experience for the core audience: people who understand better by listening and speaking than by reading dense interfaces. The Progress dashboard remains available for educators, caregivers, tutors, or advanced learners who want full session controls, materials, progress, and settings. Voice Learning strips the active learning flow down to a one-screen capture and one-button conversation experience:
 
 - capture starts with one centered upload/photo target and minimal secondary actions
 - the session view centers one microphone button, one changing cue, the tutor text, and a few simple actions
@@ -24,7 +24,7 @@ Phloem includes an alternate voice-first UI for the core low-literacy audience. 
 - long tutor text scrolls inside the response area while the page itself stays fixed to one viewport
 - tutor text starts at the default minimum size and can be enlarged from `A-` / `A+` controls in the top action row
 - active recording turns the mic and animated orb rings red; recorder status hints are hidden in this simplified mode
-- learners can still switch back to the full dashboard or start a new page from the top actions
+- learners can still switch to the Progress dashboard or start a new page from the top actions
 
 ## Setup
 

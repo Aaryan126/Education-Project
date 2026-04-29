@@ -226,67 +226,71 @@ export function ConversationPanel({
           </div>
         ) : (
           <>
-            {visibleMessages.map((message, index) => (
-              <div key={message.id || `${message.role}-${index}`} className={`message ${message.role}`}>
-                {editingMessageId === message.id ? (
-                  <div className="message-edit">
-                    <textarea
-                      value={editingDraft}
-                      autoFocus
-                      rows={Math.min(8, Math.max(3, editingDraft.split("\n").length))}
-                      onChange={(event) => setEditingDraft(event.target.value)}
-                      onKeyDown={(event) => {
-                        if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                          event.preventDefault();
-                          saveEdit();
-                        }
+            {visibleMessages.map((message, index) => {
+              const copied = copiedMessageId === message.id;
 
-                        if (event.key === "Escape") {
-                          event.preventDefault();
-                          cancelEdit();
-                        }
-                      }}
-                    />
-                    <div className="message-edit-actions">
-                      <button type="button" onClick={saveEdit} disabled={!editingDraft.trim()}>
-                        <Check size={14} aria-hidden />
-                        Save
-                      </button>
-                      <button type="button" onClick={cancelEdit}>
-                        <X size={14} aria-hidden />
-                        Cancel
-                      </button>
+              return (
+                <div key={message.id || `${message.role}-${index}`} className={`message ${message.role}`}>
+                  {editingMessageId === message.id ? (
+                    <div className="message-edit">
+                      <textarea
+                        value={editingDraft}
+                        autoFocus
+                        rows={Math.min(8, Math.max(3, editingDraft.split("\n").length))}
+                        onChange={(event) => setEditingDraft(event.target.value)}
+                        onKeyDown={(event) => {
+                          if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                            event.preventDefault();
+                            saveEdit();
+                          }
+
+                          if (event.key === "Escape") {
+                            event.preventDefault();
+                            cancelEdit();
+                          }
+                        }}
+                      />
+                      <div className="message-edit-actions">
+                        <button type="button" onClick={saveEdit} disabled={!editingDraft.trim()}>
+                          <Check size={14} aria-hidden />
+                          Save
+                        </button>
+                        <button type="button" onClick={cancelEdit}>
+                          <X size={14} aria-hidden />
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="message-content">
-                      <MessageContent message={message} speechTrace={speechTrace} />
-                    </div>
-                    <div className="message-actions" aria-label={`${message.role} message actions`}>
-                      <button
-                        type="button"
-                        onClick={() => void copyMessage(message)}
-                        disabled={!message.id}
-                        title="Copy message"
-                        aria-label="Copy message"
-                      >
-                        <Copy size={13} aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => beginEdit(message)}
-                        disabled={!message.id || busy}
-                        title="Edit message"
-                        aria-label="Edit message"
-                      >
-                        <Pencil size={13} aria-hidden />
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+                  ) : (
+                    <>
+                      <div className="message-content">
+                        <MessageContent message={message} speechTrace={speechTrace} />
+                      </div>
+                      <div className="message-actions" aria-label={`${message.role} message actions`}>
+                        <button
+                          type="button"
+                          onClick={() => void copyMessage(message)}
+                          disabled={!message.id}
+                          title={copied ? "Copied" : "Copy message"}
+                          aria-label={copied ? "Copied" : "Copy message"}
+                        >
+                          <Copy size={13} aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => beginEdit(message)}
+                          disabled={!message.id || busy}
+                          title="Edit message"
+                          aria-label="Edit message"
+                        >
+                          <Pencil size={13} aria-hidden />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
 
             {showTyping && (
               <div className="typing-indicator" aria-label="Tutor is typing">

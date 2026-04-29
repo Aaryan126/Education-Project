@@ -137,6 +137,12 @@ try {
   });
 
   await page.goto(baseUrl, { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: /voice learning/i }).waitFor({ state: "visible" });
+  await page.getByRole("button", { name: /progress dashboard/i }).click();
+  await page.getByText(/what would you like to learn today/i).waitFor({ state: "visible" });
+  await page.waitForFunction(() => window.localStorage.getItem("phloem:listen-mode") === "0");
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByText(/what would you like to learn today/i).waitFor({ state: "visible" });
   await page.locator("input.hidden-file-input").setInputFiles({
     name: "photosynthesis.png",
     mimeType: "image/png",

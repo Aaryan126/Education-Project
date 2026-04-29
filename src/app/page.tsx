@@ -643,6 +643,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [processingMaterials, setProcessingMaterials] = useState(false);
   const [tutorStopped, setTutorStopped] = useState(false);
+  const [tutorResponsePending, setTutorResponsePending] = useState(false);
   const [tutorSpeaking, setTutorSpeaking] = useState(false);
   const [speechTrace, setSpeechTrace] = useState<SpeechTraceState | null>(null);
   const [status, setStatus] = useState("Ready");
@@ -991,6 +992,7 @@ export default function Home() {
     setError("");
     setSessionsError("");
     setTutorStopped(false);
+    setTutorResponsePending(false);
     setStatus("Loading saved session...");
 
     try {
@@ -1063,6 +1065,7 @@ export default function Home() {
     rememberLastSessionId(null);
     setBusy(true);
     setProcessingMaterials(true);
+    setTutorResponsePending(false);
     setError("");
     setStatus(`Processing ${queuedMaterials.length} material${queuedMaterials.length === 1 ? "" : "s"}...`);
 
@@ -1192,6 +1195,7 @@ export default function Home() {
 
     setPendingMaterials([]);
     setSessionId(null);
+    setTutorResponsePending(false);
     setMaterials((current) => [...current, nextMaterial]);
     setSelectedMaterialId(nextMaterial.id);
     setSessionMemory(nextSessionMemory);
@@ -1249,6 +1253,7 @@ export default function Home() {
     setPendingMaterials([]);
     setSessionId(null);
     setTutorStopped(false);
+    setTutorResponsePending(false);
     setMaterials([]);
     setSelectedMaterialId(null);
     setSessionMemory(createEmptySessionMemory());
@@ -1275,6 +1280,7 @@ export default function Home() {
 
   function handleStopTutorResponse() {
     setTutorStopped(true);
+    setTutorResponsePending(false);
     tutorAbortRef.current?.abort();
     ttsAbortRef.current?.abort();
     stopTutorSpeech();
@@ -1451,6 +1457,7 @@ export default function Home() {
 
     setError("");
     setTutorStopped(false);
+    setTutorResponsePending(true);
     setBusy(true);
     setStatus("Tutor is thinking...");
     setQuestion("");
@@ -1471,6 +1478,7 @@ export default function Home() {
 
         if (controller.signal.aborted) {
           setTutorStopped(true);
+          setTutorResponsePending(false);
           setStatus("Tutor response stopped");
           return;
         }
@@ -1515,6 +1523,7 @@ export default function Home() {
 
       if (controller.signal.aborted) {
         setTutorStopped(true);
+        setTutorResponsePending(false);
         setStatus("Tutor response stopped");
         return;
       }
@@ -1538,6 +1547,7 @@ export default function Home() {
         }
 
         assistantRevealed = true;
+        setTutorResponsePending(false);
         setMessages((current) => [...current, assistantMessage]);
         void saveConversationMessages(activeSessionId, [userMessage, assistantMessage]).catch(() => undefined);
       };
@@ -1568,9 +1578,11 @@ export default function Home() {
         (typeof nextError === "object" && nextError !== null && "name" in nextError && nextError.name === "AbortError")
       ) {
         setTutorStopped(true);
+        setTutorResponsePending(false);
         setStatus("Tutor response stopped");
         return;
       }
+      setTutorResponsePending(false);
       setError(nextError instanceof Error ? nextError.message : "Tutor request failed");
       setStatus("Tutor request failed");
     } finally {
@@ -2143,6 +2155,7 @@ export default function Home() {
       disabled={busy}
       sourceLanguage={sourceLanguage}
       tutorSpeaking={tutorSpeaking}
+      waitingForResponse={tutorResponsePending}
       onTranscript={(transcript, voiceInteractionSignals) => {
         setQuestion(transcript);
         void submitQuestion(transcript, { voiceInteractionSignals });
@@ -2179,6 +2192,7 @@ export default function Home() {
         sessionLanguage={sessionLanguage}
         question={question}
         busy={busy}
+        responsePending={tutorResponsePending}
         tutorSpeaking={tutorSpeaking}
         speechTrace={speechTrace}
         activeLearningCheck={activeLearningCheck}
@@ -3250,6 +3264,7 @@ function ListenModeSession({
   sessionLanguage,
   question,
   busy,
+  responsePending,
   tutorSpeaking,
   speechTrace,
   activeLearningCheck,
@@ -3277,6 +3292,7 @@ function ListenModeSession({
   sessionLanguage: string;
   question: string;
   busy: boolean;
+  responsePending: boolean;
   tutorSpeaking: boolean;
   speechTrace: SpeechTraceState | null;
   activeLearningCheck: ActiveLearningCheck | null;
@@ -3302,15 +3318,25 @@ function ListenModeSession({
   const latestUser = visibleMessages.filter((message) => message.role === "user").at(-1);
   const [typeOpen, setTypeOpen] = useState(false);
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
-  const traceablePromptMessageId = !activeLearningCheck && latestAssistant?.content.trim() ? latestAssistant.id : null;
-  const currentModeLabel = tutorSpeaking
-    ? "Phloem is speaking"
-    : busy
-      ? "Phloem is thinking"
-      : activeLearningCheck
-        ? "Your turn"
-        : "Press the microphone";
-  const currentPrompt = activeLearningCheck?.question || latestAssistant?.content || promptText;
+  const traceablePromptMessageId =
+    !responsePending && !activeLearningCheck && latestAssistant?.content.trim() ? latestAssistant.id : null;
+  const currentModeLabel = responsePending
+    ? "Phloem is thinking"
+    : tutorSpeaking
+      ? "Phloem is speaking"
+      : busy
+        ? "Phloem is thinking"
+        : activeLearningCheck
+          ? "Your turn"
+          : "Press the microphone";
+  const currentPrompt = responsePending ? "" : activeLearningCheck?.question || latestAssistant?.content || promptText;
+  const promptLabel = responsePending
+    ? "Phloem is getting ready"
+    : activeLearningCheck
+      ? "Question"
+      : latestAssistant
+        ? "Phloem said"
+        : "Start here";
   const clampedTextSizeStep = clampListenTextSizeStep(textSizeStep);
   const clampedSpeechRate = clampTtsSpeechRate(speechRate);
   const speechRateLabel = `${Number.isInteger(clampedSpeechRate) ? clampedSpeechRate.toFixed(0) : clampedSpeechRate.toFixed(2).replace(/0$/, "")}x`;
@@ -3446,14 +3472,14 @@ function ListenModeSession({
             <span>{currentModeLabel}</span>
           </div>
 
-          <div className="one-button-prompt" data-text-size={clampedTextSizeStep}>
+          <div className="one-button-prompt" data-text-size={clampedTextSizeStep} aria-busy={responsePending}>
             <div className="one-button-prompt-header">
-              <span className="one-button-prompt-label">
-                {activeLearningCheck ? "Question" : latestAssistant ? "Phloem said" : "Start here"}
-              </span>
+              <span className="one-button-prompt-label">{promptLabel}</span>
             </div>
-            <div className="one-button-prompt-text" tabIndex={0}>
-              <ListenPromptText text={currentPrompt} messageId={traceablePromptMessageId} speechTrace={speechTrace} />
+            <div className={`one-button-prompt-text ${responsePending ? "pending" : ""}`} tabIndex={0}>
+              {!responsePending && (
+                <ListenPromptText text={currentPrompt} messageId={traceablePromptMessageId} speechTrace={speechTrace} />
+              )}
             </div>
           </div>
 
@@ -3464,11 +3490,11 @@ function ListenModeSession({
           )}
 
           <div className="one-button-actions" aria-label="Helpful actions">
-            <button type="button" onClick={onHearPrompt}>
+            <button type="button" onClick={onHearPrompt} disabled={responsePending}>
               <Volume2 size={18} aria-hidden />
               Help
             </button>
-            <button type="button" onClick={onSpeakLast} disabled={busy}>
+            <button type="button" onClick={onSpeakLast} disabled={busy || responsePending}>
               <Volume2 size={18} aria-hidden />
               Repeat
             </button>
@@ -3477,12 +3503,12 @@ function ListenModeSession({
                 Stop
               </button>
             ) : (
-              <button type="button" onClick={() => setTypeOpen((current) => !current)}>
+              <button type="button" onClick={() => setTypeOpen((current) => !current)} disabled={responsePending}>
                 Type
               </button>
             )}
             {activeLearningCheck?.status === "unanswered" && (
-              <button type="button" onClick={onSkipLearningCheck} disabled={busy}>
+              <button type="button" onClick={onSkipLearningCheck} disabled={busy || responsePending}>
                 Skip
               </button>
             )}
@@ -3492,7 +3518,7 @@ function ListenModeSession({
             <div className="one-button-type-row">
               <textarea
                 value={question}
-                disabled={busy}
+                disabled={busy || responsePending}
                 rows={1}
                 placeholder="Type instead"
                 onChange={(event) => onQuestionChange(event.target.value)}
@@ -3503,7 +3529,7 @@ function ListenModeSession({
                   }
                 }}
               />
-              <button type="button" onClick={onSend} disabled={busy || !question.trim()}>
+              <button type="button" onClick={onSend} disabled={busy || responsePending || !question.trim()}>
                 Send
               </button>
             </div>

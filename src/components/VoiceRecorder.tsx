@@ -12,6 +12,7 @@ type VoiceRecorderProps = {
   disabled: boolean;
   sourceLanguage: string;
   tutorSpeaking?: boolean;
+  waitingForResponse?: boolean;
   onTranscript: (text: string, voiceInteractionSignals?: VoiceInteractionSignals) => void;
 };
 
@@ -37,7 +38,13 @@ type VoiceTurnStats = {
   answerAudioDurationMs: number;
 };
 
-export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false, onTranscript }: VoiceRecorderProps) {
+export function VoiceRecorder({
+  disabled,
+  sourceLanguage,
+  tutorSpeaking = false,
+  waitingForResponse = false,
+  onTranscript
+}: VoiceRecorderProps) {
   const vadRef = useRef<MicVADInstance | null>(null);
   const pendingTurnAudioRef = useRef<Float32Array | null>(null);
   const fallbackTimerRef = useRef<number | null>(null);
@@ -353,23 +360,49 @@ export function VoiceRecorder({ disabled, sourceLanguage, tutorSpeaking = false,
     };
   }
 
-  const visibleStatus = listening && tutorSpeaking ? "Paused while tutor speaks" : listening && disabled ? "Paused" : status;
-  const active = (listening && !disabled && !tutorSpeaking) || userSpeaking || processing;
+  const visibleStatus = waitingForResponse
+    ? "Preparing response..."
+    : listening && tutorSpeaking
+      ? "Paused while tutor speaks"
+      : listening && disabled
+        ? "Paused"
+        : status;
+  const loading = waitingForResponse || processing || (listening && disabled && !tutorSpeaking);
+  const active = !loading && ((listening && !disabled && !tutorSpeaking) || userSpeaking);
+  const buttonLabel = loading
+    ? "Tutor is preparing a response"
+    : listening
+      ? "Stop hands-free voice"
+      : "Start hands-free voice";
 
   return (
     <div className="voice-control">
       <button
-        className={`mic-button ${active ? "recording" : ""}`}
+        className={`mic-button ${active ? "recording" : ""} ${loading ? "loading" : ""}`}
         type="button"
         onClick={listening ? () => void stopHandsFreeListening() : () => void startHandsFreeListening()}
         disabled={!listening && disabled}
-        title={listening ? "Stop hands-free voice" : "Start hands-free voice"}
-        aria-label={listening ? "Stop hands-free voice" : "Start hands-free voice"}
+        title={buttonLabel}
+        aria-label={buttonLabel}
       >
-        {listening ? <Square size={16} aria-hidden /> : <Mic size={18} aria-hidden />}
-        <span className="sr-only">{listening ? "Stop hands-free voice" : "Start hands-free voice"}</span>
+        {loading ? (
+          <span className="mic-loading-dots" aria-hidden>
+            <span />
+            <span />
+            <span />
+          </span>
+        ) : listening ? (
+          <Square size={16} aria-hidden />
+        ) : (
+          <Mic size={18} aria-hidden />
+        )}
+        <span className="sr-only">{buttonLabel}</span>
       </button>
-      {visibleStatus && <span className={`mic-status ${active ? "recording" : ""}`}>{visibleStatus}</span>}
+      {visibleStatus && (
+        <span className={`mic-status ${active ? "recording" : ""} ${loading ? "loading" : ""}`}>
+          {visibleStatus}
+        </span>
+      )}
     </div>
   );
 }

@@ -3469,6 +3469,42 @@ select:disabled {
   box-shadow: 0 0 0 0 rgba(196, 59, 59, 0.35);
 }
 
+.mic-button.loading {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: rgba(0, 135, 97, 0.24);
+  animation: none;
+  box-shadow: none;
+}
+
+.mic-button.loading:disabled {
+  opacity: 1;
+}
+
+.mic-loading-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 26px;
+}
+
+.mic-loading-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: micLoadingDot 1s ease-in-out infinite;
+}
+
+.mic-loading-dots span:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.mic-loading-dots span:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
 @keyframes micPulse {
   0% {
     box-shadow: 0 0 0 0 rgba(196, 59, 59, 0.35);
@@ -3478,6 +3514,19 @@ select:disabled {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(196, 59, 59, 0);
+  }
+}
+
+@keyframes micLoadingDot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(0) scale(0.72);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1);
   }
 }
 
@@ -3491,6 +3540,11 @@ select:disabled {
 
 .mic-status.recording {
   color: var(--danger);
+  font-weight: 550;
+}
+
+.mic-status.loading {
+  color: var(--accent);
   font-weight: 550;
 }
 
@@ -5062,6 +5116,24 @@ select:disabled {
   box-shadow: 0 16px 34px rgba(196, 59, 59, 0.26) !important;
 }
 
+.one-button-mic-wrap .mic-button.loading,
+.one-button-mic-wrap .mic-button.loading:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(0, 135, 97, 0.24) !important;
+  color: #008761 !important;
+  box-shadow: 0 16px 34px rgba(0, 135, 97, 0.14) !important;
+}
+
+.one-button-mic-wrap .mic-loading-dots {
+  gap: 8px;
+  min-width: 54px;
+}
+
+.one-button-mic-wrap .mic-loading-dots span {
+  width: 10px;
+  height: 10px;
+}
+
 .one-button-mic-wrap .mic-button svg {
   width: 36px;
   height: 36px;
@@ -5186,6 +5258,13 @@ select:disabled {
   overflow-y: auto;
   padding: 2px 10px 8px;
   scrollbar-gutter: stable both-edges;
+}
+
+.one-button-prompt-text.pending {
+  min-height: clamp(92px, 18vh, 170px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
 }
 
 .one-button-prompt-text p {

@@ -1,4 +1,5 @@
 import { copyFile, mkdir, readdir, stat } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -24,7 +25,19 @@ const assetSources = [
 ];
 
 async function packageDir(packageName) {
-  return dirname(require.resolve(`${packageName}/package.json`));
+  // Try standard resolution first
+  try {
+    return dirname(require.resolve(`${packageName}/package.json`));
+  } catch {
+    // Fallback: resolve any exported module and walk up to package root
+    const resolved = require.resolve(packageName);
+    let dir = dirname(resolved);
+    while (dir !== '/' && dir !== '.') {
+      if (existsSync(join(dir, 'package.json'))) return dir;
+      dir = dirname(dir);
+    }
+    throw new Error(`Cannot find package directory for ${packageName}`);
+  }
 }
 
 async function copyAssets() {

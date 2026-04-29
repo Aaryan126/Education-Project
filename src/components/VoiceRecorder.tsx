@@ -112,6 +112,15 @@ export function VoiceRecorder({
     }
 
     try {
+      // Check for secure context (HTTPS or localhost) — browsers block
+      // microphone access on insecure (HTTP) contexts, causing silent hang.
+      if (!window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+        throw new Error(
+          "Microphone requires HTTPS or localhost. Your current connection is HTTP. " +
+          "Voice features are unavailable on this deployment URL."
+        );
+      }
+
       setStatus("Starting mic...");
       shouldListenRef.current = true;
 
@@ -131,7 +140,8 @@ export function VoiceRecorder({
           startOnLoad: false,
           processorType: "auto",
           getStream: () =>
-            navigator.mediaDevices.getUserMedia({
+            Promise.race([
+              navigator.mediaDevices.getUserMedia({
               audio: {
                 channelCount: 1,
                 echoCancellation: true,
@@ -139,6 +149,10 @@ export function VoiceRecorder({
                 autoGainControl: true
               }
             }),
+              new Promise<MediaStream>((_resolve, reject) =>
+                setTimeout(() => reject(new Error("Microphone permission timed out (10s). Ensure HTTPS or allow mic access.")), 10000)
+              )
+            ]),
           ortConfig: (ort) => {
             ort.env.wasm.numThreads = 1;
             ort.env.wasm.wasmPaths = "/vad/";

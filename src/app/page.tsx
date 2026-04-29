@@ -87,6 +87,8 @@ type CapturedMaterial = {
   name: string;
   mimeType: string;
   imageDataUrl: string | null;
+  /** Raw data URL (base64) of the uploaded file — preserved for PDF rendering */
+  dataUrl?: string;
   learningContext: LearningContext;
   createdAt: number;
 };
@@ -1097,6 +1099,7 @@ export default function Home() {
           name: material.name,
           mimeType: material.mimeType,
           imageDataUrl: material.mimeType.startsWith("image/") ? material.dataUrl : null,
+          dataUrl: material.dataUrl,
           learningContext: data.learningContext,
           createdAt: Date.now()
         });
@@ -3148,6 +3151,7 @@ function ListenModeSession({
   const latestAssistant = visibleMessages.filter((message) => message.role === "assistant").at(-1);
   const latestUser = visibleMessages.filter((message) => message.role === "user").at(-1);
   const [typeOpen, setTypeOpen] = useState(false);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
   const traceablePromptMessageId = !activeLearningCheck && latestAssistant?.content.trim() ? latestAssistant.id : null;
   const currentModeLabel = tutorSpeaking
     ? "Phloem is speaking"
@@ -3162,9 +3166,15 @@ function ListenModeSession({
   const speechRateLabel = `${Number.isInteger(clampedSpeechRate) ? clampedSpeechRate.toFixed(0) : clampedSpeechRate.toFixed(2).replace(/0$/, "")}x`;
 
   return (
-    <main className="listen-shell listen-session-shell listen-one-screen">
+    <main className={`listen-shell listen-session-shell listen-one-screen${documentViewerOpen ? " split-view-active" : ""}`}>
       <header className="one-button-topbar">
-        <div className="one-button-page-chip">
+        <button
+          className="one-button-page-chip"
+          type="button"
+          onClick={() => setDocumentViewerOpen((current) => !current)}
+          title={documentViewerOpen ? "Close document view" : "Open document side-by-side"}
+          aria-pressed={documentViewerOpen}
+        >
           <div className="one-button-thumb">
             {selectedMaterial?.imageDataUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- Local camera data URL thumbnail.
@@ -3180,7 +3190,7 @@ function ListenModeSession({
               {materials.length > 1 ? ` • ${materials.length} pages` : ""}
             </span>
           </div>
-        </div>
+        </button>
 
         <div className="one-button-header-controls">
           <div className="one-button-text-size-controls" aria-label="Tutor text size">
@@ -3243,78 +3253,113 @@ function ListenModeSession({
         </div>
       </header>
 
-      <section className="one-button-stage" aria-label="Voice tutor">
-        <div className={`one-button-orb ${tutorSpeaking ? "speaking" : ""} ${busy ? "busy" : ""}`}>
-          <div className="one-button-mic-wrap">{voiceRecorder}</div>
-        </div>
-
-        <div className="one-button-state">
-          <span>{currentModeLabel}</span>
-        </div>
-
-        <div className="one-button-prompt" data-text-size={clampedTextSizeStep}>
-          <div className="one-button-prompt-header">
-            <span className="one-button-prompt-label">
-              {activeLearningCheck ? "Question" : latestAssistant ? "Phloem said" : "Start here"}
-            </span>
-          </div>
-          <div className="one-button-prompt-text" tabIndex={0}>
-            <ListenPromptText text={currentPrompt} messageId={traceablePromptMessageId} speechTrace={speechTrace} />
-          </div>
-        </div>
-
-        {latestUser && (
-          <p className="one-button-last-user">
-            You said: <span>{latestUser.content}</span>
-          </p>
+      <div className="split-view-body">
+        {documentViewerOpen && (
+          <aside className="document-viewer-panel" aria-label="Document viewer">
+            <div className="document-viewer-header">
+              <h3>{selectedMaterial?.name ?? "Document"}</h3>
+              <button
+                type="button"
+                className="document-viewer-close"
+                onClick={() => setDocumentViewerOpen(false)}
+                aria-label="Close document view"
+              >
+                <X size={16} aria-hidden />
+              </button>
+            </div>
+            <div className="document-viewer-content">
+              {selectedMaterial?.imageDataUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- Local camera data URL for document viewing.
+                <img src={selectedMaterial.imageDataUrl} alt={selectedMaterial.name} className="document-viewer-image" />
+              ) : selectedMaterial?.dataUrl && isPdfMaterial(selectedMaterial) ? (
+                <iframe
+                  src={`${selectedMaterial.dataUrl}#toolbar=0&navpanes=0`}
+                  title={selectedMaterial.name}
+                  className="document-viewer-pdf"
+                />
+              ) : (
+                <div className="document-viewer-placeholder">
+                  <FileText size={48} aria-hidden />
+                  <p>No preview available</p>
+                </div>
+              )}
+            </div>
+          </aside>
         )}
 
-        <div className="one-button-actions" aria-label="Helpful actions">
-          <button type="button" onClick={onHearPrompt}>
-            <Volume2 size={18} aria-hidden />
-            Help
-          </button>
-          <button type="button" onClick={onSpeakLast} disabled={busy}>
-            <Volume2 size={18} aria-hidden />
-            Repeat
-          </button>
-          {tutorSpeaking ? (
-            <button type="button" onClick={onStopSpeaking}>
-              Stop
-            </button>
-          ) : (
-            <button type="button" onClick={() => setTypeOpen((current) => !current)}>
-              Type
-            </button>
-          )}
-          {activeLearningCheck?.status === "unanswered" && (
-            <button type="button" onClick={onSkipLearningCheck} disabled={busy}>
-              Skip
-            </button>
-          )}
-        </div>
-
-        {typeOpen && (
-          <div className="one-button-type-row">
-            <textarea
-              value={question}
-              disabled={busy}
-              rows={1}
-              placeholder="Type instead"
-              onChange={(event) => onQuestionChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  onSend();
-                }
-              }}
-            />
-            <button type="button" onClick={onSend} disabled={busy || !question.trim()}>
-              Send
-            </button>
+        <section className="one-button-stage" aria-label="Voice tutor">
+          <div className={`one-button-orb ${tutorSpeaking ? "speaking" : ""} ${busy ? "busy" : ""}`}>
+            <div className="one-button-mic-wrap">{voiceRecorder}</div>
           </div>
-        )}
-      </section>
+
+          <div className="one-button-state">
+            <span>{currentModeLabel}</span>
+          </div>
+
+          <div className="one-button-prompt" data-text-size={clampedTextSizeStep}>
+            <div className="one-button-prompt-header">
+              <span className="one-button-prompt-label">
+                {activeLearningCheck ? "Question" : latestAssistant ? "Phloem said" : "Start here"}
+              </span>
+            </div>
+            <div className="one-button-prompt-text" tabIndex={0}>
+              <ListenPromptText text={currentPrompt} messageId={traceablePromptMessageId} speechTrace={speechTrace} />
+            </div>
+          </div>
+
+          {latestUser && (
+            <p className="one-button-last-user">
+              You said: <span>{latestUser.content}</span>
+            </p>
+          )}
+
+          <div className="one-button-actions" aria-label="Helpful actions">
+            <button type="button" onClick={onHearPrompt}>
+              <Volume2 size={18} aria-hidden />
+              Help
+            </button>
+            <button type="button" onClick={onSpeakLast} disabled={busy}>
+              <Volume2 size={18} aria-hidden />
+              Repeat
+            </button>
+            {tutorSpeaking ? (
+              <button type="button" onClick={onStopSpeaking}>
+                Stop
+              </button>
+            ) : (
+              <button type="button" onClick={() => setTypeOpen((current) => !current)}>
+                Type
+              </button>
+            )}
+            {activeLearningCheck?.status === "unanswered" && (
+              <button type="button" onClick={onSkipLearningCheck} disabled={busy}>
+                Skip
+              </button>
+            )}
+          </div>
+
+          {typeOpen && (
+            <div className="one-button-type-row">
+              <textarea
+                value={question}
+                disabled={busy}
+                rows={1}
+                placeholder="Type instead"
+                onChange={(event) => onQuestionChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    onSend();
+                  }
+                }}
+              />
+              <button type="button" onClick={onSend} disabled={busy || !question.trim()}>
+                Send
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

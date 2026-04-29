@@ -5191,6 +5191,154 @@ select:disabled {
   text-align: center;
 }
 
+/* ============================================================
+   SPLIT DOCUMENT VIEWER (Listen Mode)
+   ============================================================ */
+
+.one-button-page-chip {
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease,
+              box-shadow var(--duration-fast) ease,
+              background var(--duration-fast) ease;
+  user-select: none;
+}
+
+.one-button-page-chip:hover {
+  border-color: rgba(0, 135, 97, 0.35);
+  box-shadow: 0 2px 12px rgba(0, 135, 97, 0.1);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.one-button-page-chip[aria-pressed="true"] {
+  border-color: #008761;
+  background: rgba(0, 135, 97, 0.06);
+}
+
+.split-view-active {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: clamp(10px, 1.6vh, 16px);
+}
+
+.split-view-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  overflow: hidden;
+}
+
+.split-view-active .split-view-body {
+  grid-template-columns: minmax(0, 50%) minmax(0, 50%);
+  gap: clamp(10px, 1.6vh, 16px);
+}
+
+.document-viewer-panel {
+  background: white;
+  border: 1px solid #dce8df;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.document-viewer-header {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef2ef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.document-viewer-header h3 {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 760;
+  color: #101828;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-viewer-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #dce3df;
+  background: white;
+  color: #596576;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.document-viewer-close:hover {
+  background: #f5f7f6;
+  color: #c43b3b;
+  border-color: rgba(196, 59, 59, 0.3);
+}
+
+.document-viewer-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: #f8faf8;
+}
+
+.document-viewer-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+}
+
+.document-viewer-pdf {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 4px;
+  background: white;
+}
+
+.document-viewer-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #98a2aa;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.document-viewer-placeholder p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* In split view, shrink the tutor stage slightly to give more room */
+.split-view-active .one-button-stage {
+  padding: clamp(12px, 2vh, 22px);
+}
+
+.split-view-active .one-button-orb {
+  width: clamp(140px, 22vh, 220px);
+}
+
 @media (max-width: 900px) {
   .listen-one-screen {
     min-height: 100svh;
@@ -5233,6 +5381,23 @@ select:disabled {
 
   .one-button-page-chip {
     width: min(420px, 100%);
+  }
+
+  /* Split view: stack vertically on small screens */
+  .split-view-active {
+    grid-template-rows: auto 1fr;
+    overflow-y: auto;
+  }
+
+  .split-view-active .split-view-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 40vh) minmax(0, 1fr);
+    gap: 10px;
+    overflow: visible;
+  }
+
+  .document-viewer-panel {
+    max-height: 45vh;
   }
 }
 

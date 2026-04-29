@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ChevronDown, Clipboard, FileUp, Link, ScanLine, Square, Upload } from "lucide-react";
+import { Camera, ChevronDown, Clipboard, FileUp, Link, ScanLine, Square, Upload, Volume2 } from "lucide-react";
 import type { ClipboardEvent, DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
@@ -15,6 +15,8 @@ export type CapturedInput = {
 type CameraCaptureProps = {
   busy: boolean;
   onMaterialReady: (material: CapturedInput) => void;
+  variant?: "dashboard" | "listen";
+  onHearInstructions?: () => void;
 };
 
 const acceptedUploadTypes = [
@@ -46,7 +48,12 @@ function isAcceptedFile(file: File | Blob, name = "") {
   );
 }
 
-export function CameraCapture({ busy, onMaterialReady }: CameraCaptureProps) {
+export function CameraCapture({
+  busy,
+  onMaterialReady,
+  variant = "dashboard",
+  onHearInstructions
+}: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -271,14 +278,14 @@ export function CameraCapture({ busy, onMaterialReady }: CameraCaptureProps) {
             <canvas ref={canvasRef} hidden />
           </div>
 
-          <div className="camera-controls">
+          <div className={`camera-controls ${variant === "listen" ? "listen-camera-controls" : ""}`}>
             <button className="button danger" type="button" onClick={stopCamera} disabled={busy}>
               <Square size={18} aria-hidden />
               Stop
             </button>
             <button className="button primary" type="button" onClick={captureFrame} disabled={busy}>
               <ScanLine size={18} aria-hidden />
-              Add photo
+              {variant === "listen" ? "Use photo" : "Add photo"}
             </button>
           </div>
 
@@ -286,49 +293,74 @@ export function CameraCapture({ busy, onMaterialReady }: CameraCaptureProps) {
         </>
       ) : (
         <div
-          className={`upload-drop-zone ${dragActive ? "drag-active" : ""}`}
+          className={`upload-drop-zone ${variant === "listen" ? "listen-upload-zone" : ""} ${
+            dragActive ? "drag-active" : ""
+          }`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={() => setDragActive(false)}
         >
-          <div className="upload-icon-orb">
-            <FileUp size={50} aria-hidden />
-          </div>
-          <h2>Drop your file here</h2>
-          <p>Supports images, PDFs, and Word .docx files.</p>
+          {variant === "listen" ? (
+            <>
+              <div className="listen-upload-icon">
+                <Camera size={62} aria-hidden />
+              </div>
+              <h2>Show your page</h2>
+              <p>Take a photo, then talk with Phloem.</p>
+            </>
+          ) : (
+            <>
+              <div className="upload-icon-orb">
+                <FileUp size={50} aria-hidden />
+              </div>
+              <h2>Drop your file here</h2>
+              <p>Supports images, PDFs, and Word .docx files.</p>
+            </>
+          )}
 
           <div className="upload-split-button" role="group" aria-label="Upload from device">
             <button
-              className="upload-main-button"
+              className={`upload-main-button ${variant === "listen" ? "listen-file-button" : ""}`}
               type="button"
               disabled={busy}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={variant === "listen" ? startCamera : () => fileInputRef.current?.click()}
             >
-              <Upload size={20} aria-hidden />
-              Upload from device
+              {variant === "listen" ? <Camera size={24} aria-hidden /> : <Upload size={20} aria-hidden />}
+              {variant === "listen" ? "Take photo" : "Upload from device"}
             </button>
             <button
-              className="upload-menu-button"
+              className={`upload-menu-button ${variant === "listen" ? "listen-file-menu-button" : ""}`}
               type="button"
               disabled={busy}
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Choose upload option"
+              aria-label={variant === "listen" ? "Choose file" : "Choose upload option"}
             >
-              <ChevronDown size={18} aria-hidden />
+              {variant === "listen" ? <Upload size={20} aria-hidden /> : <ChevronDown size={18} aria-hidden />}
             </button>
           </div>
 
-          <div className="upload-divider" aria-hidden>
-            <span />
-            <strong>or</strong>
-            <span />
-          </div>
+          {variant === "listen" && onHearInstructions ? (
+            <button className="listen-hear-steps-button" type="button" onClick={onHearInstructions}>
+              <Volume2 size={20} aria-hidden />
+              Hear steps
+            </button>
+          ) : null}
+
+          {variant === "dashboard" && (
+            <div className="upload-divider" aria-hidden>
+              <span />
+              <strong>or</strong>
+              <span />
+            </div>
+          )}
 
           <div className="upload-secondary-actions">
-            <button className="upload-secondary-button" type="button" onClick={startCamera} disabled={busy || cameraStarting}>
-              <Camera size={20} aria-hidden />
-              {cameraStarting ? "Opening..." : "Take a photo"}
-            </button>
+            {variant === "dashboard" && (
+              <button className="upload-secondary-button" type="button" onClick={startCamera} disabled={busy || cameraStarting}>
+                <Camera size={20} aria-hidden />
+                {cameraStarting ? "Opening..." : "Take a photo"}
+              </button>
+            )}
             <button className="upload-secondary-button" type="button" onClick={() => void pasteImageFromClipboard()} disabled={busy}>
               <Clipboard size={20} aria-hidden />
               Paste image

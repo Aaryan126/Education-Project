@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import {
   AlertCircle,
   BarChart3,
@@ -14,8 +15,10 @@ import {
   FileText,
   Folder,
   Globe,
+  Headphones,
   HelpCircle,
   House,
+  LayoutDashboard,
   Leaf,
   MessageSquare,
   MoreVertical,
@@ -33,6 +36,7 @@ import type { SpeechTraceState } from "@/components/ConversationPanel";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { renderPdfPageImages } from "@/lib/documents/renderPdfPages";
 import {
+  getSpeechTraceParts,
   buildSpeechTraceWordEndTimesMs,
   getSpeechTraceWordIndex,
   getSpeechTraceWordIndexAtChar,
@@ -230,6 +234,7 @@ const DEFAULT_TTS_SPEECH_RATE = 1;
 const MIN_TTS_SPEECH_RATE = 0.75;
 const MAX_TTS_SPEECH_RATE = 1.5;
 const LAST_SESSION_STORAGE_KEY = "phloem:last-session-id";
+const LISTEN_MODE_STORAGE_KEY = "phloem:listen-mode";
 const SESSION_PROGRESS_STORAGE_PREFIX = "phloem:session-progress:";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -583,6 +588,7 @@ export default function Home() {
   const [activeLearningCheckId, setActiveLearningCheckId] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const autoRestoreAttemptedRef = useRef(false);
+  const listenModeStorageReadyRef = useRef(false);
   const tutorAbortRef = useRef<AbortController | null>(null);
   const ttsAbortRef = useRef<AbortController | null>(null);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -636,6 +642,7 @@ export default function Home() {
   const [materialsError, setMaterialsError] = useState("");
   const [ttsUsageLoading, setTtsUsageLoading] = useState(false);
   const [ttsUsageError, setTtsUsageError] = useState("");
+  const [listenMode, setListenMode] = useState(false);
 
   // Settings view state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -685,6 +692,36 @@ export default function Home() {
       .then((data: HealthResponse) => setHealth(data))
       .catch(() => setHealth(null));
   }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (listenModeStorageReadyRef.current) {
+        return;
+      }
+
+      try {
+        listenModeStorageReadyRef.current = true;
+        setListenMode(window.localStorage.getItem(LISTEN_MODE_STORAGE_KEY) === "1");
+      } catch {
+        listenModeStorageReadyRef.current = true;
+        setListenMode(false);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!listenModeStorageReadyRef.current) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(LISTEN_MODE_STORAGE_KEY, listenMode ? "1" : "0");
+    } catch {
+      // localStorage can be unavailable in private or restricted browser modes.
+    }
+  }, [listenMode]);
 
   useEffect(() => {
     return () => {
@@ -831,6 +868,20 @@ export default function Home() {
     setSessionsOpen(false);
     setMaterialsOpen(false);
     setProgressOpen(true);
+  }
+
+  function handleOpenListenMode() {
+    setSettingsOpen(false);
+    setSessionsOpen(false);
+    setMaterialsOpen(false);
+    setProgressOpen(false);
+    listenModeStorageReadyRef.current = true;
+    setListenMode(true);
+  }
+
+  function handleCloseListenMode() {
+    listenModeStorageReadyRef.current = true;
+    setListenMode(false);
   }
 
   async function handleDeleteSession(nextSessionId: string) {
@@ -1617,6 +1668,55 @@ export default function Home() {
     }
   }
 
+  function speakInterfacePrompt(text: string, options?: { traceMessageId?: string }) {
+    const promptText = text.trim();
+
+    if (!promptText) {
+      return;
+    }
+
+    stopTutorSpeech();
+
+    if (!("speechSynthesis" in window)) {
+      setStatus("Speech playback is unavailable in this browser");
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(promptText);
+    speechUtteranceRef.current = utterance;
+    utterance.lang = targetLanguage;
+    utterance.rate = clampTtsSpeechRate(ttsSpeechRate);
+    utterance.pitch = ttsVoiceStyle === "female" ? 1.05 : 0.94;
+    startSpeechTrace(options?.traceMessageId, promptText, { manual: true });
+    utterance.onboundary = (event) => {
+      const wordIndex = getSpeechTraceWordIndexAtChar(promptText, event.charIndex);
+
+      if (wordIndex !== null) {
+        updateSpeechTraceWordIndex(wordIndex);
+      }
+    };
+    utterance.onend = () => {
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+        clearSpeechTrace();
+        setTutorSpeaking(false);
+        setStatus("Speech finished");
+      }
+    };
+    utterance.onerror = () => {
+      if (speechUtteranceRef.current === utterance) {
+        speechUtteranceRef.current = null;
+        clearSpeechTrace();
+        setTutorSpeaking(false);
+        setStatus("Speech playback failed");
+      }
+    };
+
+    setTutorSpeaking(true);
+    setStatus("Reading screen...");
+    window.speechSynthesis.speak(utterance);
+  }
+
   async function speakText(
     text: string,
     options?: { onReadyToReveal?: () => void; onSpeechComplete?: () => void; traceMessageId?: string }
@@ -1972,6 +2072,14 @@ export default function Home() {
   const sessionLanguage = getLanguageDisplayName(learningContext?.detectedLanguage || "English");
   const sessionPageCount = materials.length || 1;
   const learnScreenOpen = !settingsOpen && !sessionsOpen && !materialsOpen && !progressOpen;
+  const listenCapturePrompt =
+    pendingMaterials.length > 0
+      ? "Your page is ready. Press start listening, then I will read it and help you by voice."
+      : "Take a photo of your page, or choose a file. I will read it and help you by voice.";
+  const listenVisiblePrompt =
+    activeLearningCheck?.question ||
+    lastAssistantMessage?.content ||
+    "Press the microphone and ask a question. You can say things like, help me understand this page.";
 
   const languageSelector = (
     <LanguageMenu
@@ -1994,6 +2102,74 @@ export default function Home() {
     </span>
   );
 
+  const voiceRecorderControl = (
+    <VoiceRecorder
+      disabled={busy}
+      sourceLanguage={sourceLanguage}
+      tutorSpeaking={tutorSpeaking}
+      onTranscript={(transcript, voiceInteractionSignals) => {
+        setQuestion(transcript);
+        void submitQuestion(transcript, { voiceInteractionSignals });
+      }}
+    />
+  );
+
+  if (listenMode) {
+    if (phase === "capture") {
+      return (
+        <ListenModeCapture
+          busy={busy}
+          status={status}
+          error={error}
+          pendingMaterials={pendingMaterials}
+          targetLanguage={targetLanguage}
+          healthStatus={healthStatus}
+          promptText={listenCapturePrompt}
+          onMaterialReady={handleMaterialReady}
+          onRemovePendingMaterial={handleRemovePendingMaterial}
+          onStartSession={() => void handleStartSession()}
+          onUseSample={handleUseSample}
+          onCloseListenMode={handleCloseListenMode}
+          onHearPrompt={() => speakInterfacePrompt(listenCapturePrompt)}
+          onTargetLanguageChange={setTargetLanguage}
+        />
+      );
+    }
+
+    return (
+      <ListenModeSession
+        messages={messages}
+        selectedMaterial={selectedMaterial}
+        materials={materials}
+        sessionTitle={sessionTitle}
+        sessionLanguage={sessionLanguage}
+        question={question}
+        busy={busy}
+        tutorSpeaking={tutorSpeaking}
+        speechTrace={speechTrace}
+        activeLearningCheck={activeLearningCheck}
+        voiceRecorder={voiceRecorderControl}
+        promptText={listenVisiblePrompt}
+        onQuestionChange={setQuestion}
+        onSend={() => void submitQuestion()}
+        onSkipLearningCheck={handleSkipActiveLearningCheck}
+        onSpeakLast={() =>
+          void speakText(lastAssistantMessage?.content || learningContext?.suggestedQuestion || "", {
+            traceMessageId: lastAssistantMessage?.id
+          })
+        }
+        onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
+        onNewSession={handleNewSession}
+        onCloseListenMode={handleCloseListenMode}
+        onHearPrompt={() =>
+          speakInterfacePrompt(listenVisiblePrompt, {
+            traceMessageId: activeLearningCheck ? undefined : lastAssistantMessage?.id
+          })
+        }
+      />
+    );
+  }
+
   if (phase === "capture") {
     return (
       <main className="landing-shell">
@@ -2014,6 +2190,10 @@ export default function Home() {
             >
               <House size={20} aria-hidden />
               Learn
+            </button>
+            <button className="landing-nav-item listen-mode-entry" type="button" onClick={handleOpenListenMode}>
+              <Headphones size={20} aria-hidden />
+              Listen Mode
             </button>
             <button
               className={`landing-nav-item ${sessionsOpen ? "active" : ""}`}
@@ -2128,6 +2308,10 @@ export default function Home() {
               <header className="landing-toolbar">
                 <div aria-hidden />
                 <div className="landing-toolbar-actions">
+                  <button className="listen-toolbar-button" type="button" onClick={handleOpenListenMode}>
+                    <Headphones size={18} aria-hidden />
+                    Listen Mode
+                  </button>
                   <LanguageMenu
                     value={targetLanguage}
                     disabled={busy}
@@ -2237,6 +2421,10 @@ export default function Home() {
             >
               <House size={20} aria-hidden />
               Learn
+            </button>
+            <button className="landing-nav-item listen-mode-entry" type="button" onClick={handleOpenListenMode}>
+              <Headphones size={20} aria-hidden />
+              Listen Mode
             </button>
             <button
               className={`landing-nav-item ${sessionsOpen ? "active" : ""}`}
@@ -2361,6 +2549,10 @@ export default function Home() {
                 </div>
 
                 <div className="session-actions">
+                  <button className="session-action-button listen-toolbar-button" type="button" onClick={handleOpenListenMode}>
+                    <Headphones size={17} aria-hidden />
+                    Listen Mode
+                  </button>
                   <button className="session-action-button" type="button">
                     <Share2 size={17} aria-hidden />
                     Share
@@ -2406,17 +2598,7 @@ export default function Home() {
                       traceMessageId: lastAssistantMessage?.id
                     })
                   }
-                  voiceRecorder={
-                    <VoiceRecorder
-                      disabled={busy}
-                      sourceLanguage={sourceLanguage}
-                      tutorSpeaking={tutorSpeaking}
-                      onTranscript={(transcript, voiceInteractionSignals) => {
-                        setQuestion(transcript);
-                        void submitQuestion(transcript, { voiceInteractionSignals });
-                      }}
-                    />
-                  }
+                  voiceRecorder={voiceRecorderControl}
                 />
               </div>
             </>
@@ -2496,17 +2678,7 @@ export default function Home() {
                     traceMessageId: lastAssistantMessage?.id
                   })
                 }
-                voiceRecorder={
-                  <VoiceRecorder
-                    disabled={busy}
-                    sourceLanguage={sourceLanguage}
-                    tutorSpeaking={tutorSpeaking}
-                    onTranscript={(transcript, voiceInteractionSignals) => {
-                      setQuestion(transcript);
-                      void submitQuestion(transcript, { voiceInteractionSignals });
-                    }}
-                  />
-                }
+                voiceRecorder={voiceRecorderControl}
               />
             </div>
           )}
@@ -2776,6 +2948,385 @@ function MaterialRail({
       )}
     </aside>
   );
+}
+
+function ListenModeCapture({
+  busy,
+  status,
+  error,
+  pendingMaterials,
+  targetLanguage,
+  healthStatus,
+  promptText,
+  onMaterialReady,
+  onRemovePendingMaterial,
+  onStartSession,
+  onUseSample,
+  onCloseListenMode,
+  onHearPrompt,
+  onTargetLanguageChange
+}: {
+  busy: boolean;
+  status: string;
+  error: string;
+  pendingMaterials: PendingMaterial[];
+  targetLanguage: string;
+  healthStatus: ReactNode;
+  promptText: string;
+  onMaterialReady: (material: CapturedInput) => void;
+  onRemovePendingMaterial: (materialId: string) => void;
+  onStartSession: () => void;
+  onUseSample: () => void;
+  onCloseListenMode: () => void;
+  onHearPrompt: () => void;
+  onTargetLanguageChange: (value: string) => void;
+}) {
+  const hasPendingMaterial = pendingMaterials.length > 0;
+
+  return (
+    <main className="listen-shell listen-capture-shell listen-one-screen">
+      <header className="listen-topbar">
+        <div className="listen-brand">
+          <div className="brand-mark">P</div>
+          <div>
+            <h1>Listen Mode</h1>
+            <p>Voice-first learning</p>
+          </div>
+        </div>
+
+        <div className="listen-topbar-actions">
+          <LanguageMenu
+            value={targetLanguage}
+            disabled={busy}
+            onChange={onTargetLanguageChange}
+            className="listen-language-menu"
+            ariaLabel="Tutor language"
+          />
+          {healthStatus}
+          <button className="listen-secondary-button" type="button" onClick={onCloseListenMode}>
+            <LayoutDashboard size={18} aria-hidden />
+            Full dashboard
+          </button>
+        </div>
+      </header>
+
+      <section className="listen-capture-stage">
+        <div className="listen-capture-copy">
+          <span className="listen-mode-pill">
+            <Headphones size={17} aria-hidden />
+            Listen first
+          </span>
+          <h2>{hasPendingMaterial ? "Ready to listen." : "Show your page."}</h2>
+          <p>{promptText}</p>
+          <div className="listen-hero-actions">
+            <button className="listen-hear-button" type="button" onClick={onHearPrompt}>
+              <Volume2 size={20} aria-hidden />
+              Hear
+            </button>
+            <button className="listen-secondary-button" type="button" onClick={onUseSample} disabled={busy}>
+              <BookOpen size={18} aria-hidden />
+              Sample
+            </button>
+          </div>
+        </div>
+
+        <div className="listen-capture-card">
+          {hasPendingMaterial ? (
+          <ListenPendingMaterials
+            materials={pendingMaterials}
+            busy={busy}
+            status={status}
+            error={error}
+            onRemove={onRemovePendingMaterial}
+            onStart={onStartSession}
+          />
+          ) : (
+            <CameraCapture
+              busy={busy}
+              variant="listen"
+              onMaterialReady={onMaterialReady}
+              onHearInstructions={onHearPrompt}
+            />
+          )}
+        </div>
+      </section>
+
+      <ListenStatus status={status} error={error} />
+    </main>
+  );
+}
+
+function ListenPendingMaterials({
+  materials,
+  busy,
+  status,
+  error,
+  onRemove,
+  onStart
+}: {
+  materials: PendingMaterial[];
+  busy: boolean;
+  status: string;
+  error: string;
+  onRemove: (materialId: string) => void;
+  onStart: () => void;
+}) {
+  return (
+    <aside className="listen-ready-panel one-button-ready-panel" aria-live="polite">
+      <div>
+        <span className="listen-mode-pill">
+          <CheckCircle2 size={17} aria-hidden />
+          Page ready
+        </span>
+        <h2>Start listening</h2>
+        <p>Phloem will read the page and help by voice.</p>
+      </div>
+
+      <div className="listen-ready-list">
+        {materials.map((material, index) => (
+          <div className="listen-ready-row" key={material.id}>
+            <span>{index + 1}</span>
+            <div>
+              <strong>{describeMaterialType(material.mimeType)}</strong>
+              <small>{formatBytes(material.size)}</small>
+            </div>
+            <button type="button" onClick={() => onRemove(material.id)} disabled={busy} aria-label="Remove material">
+              <X size={18} aria-hidden />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button className="listen-start-button" type="button" onClick={onStart} disabled={busy}>
+        <PlayCircle size={24} aria-hidden />
+        Start listening
+      </button>
+
+      <ListenStatus status={status} error={error} />
+    </aside>
+  );
+}
+
+function ListenModeSession({
+  messages,
+  selectedMaterial,
+  materials,
+  sessionTitle,
+  sessionLanguage,
+  question,
+  busy,
+  tutorSpeaking,
+  speechTrace,
+  activeLearningCheck,
+  voiceRecorder,
+  promptText,
+  onQuestionChange,
+  onSend,
+  onSkipLearningCheck,
+  onSpeakLast,
+  onStopSpeaking,
+  onNewSession,
+  onCloseListenMode,
+  onHearPrompt
+}: {
+  messages: ConversationMessage[];
+  selectedMaterial: CapturedMaterial | null;
+  materials: CapturedMaterial[];
+  sessionTitle: string;
+  sessionLanguage: string;
+  question: string;
+  busy: boolean;
+  tutorSpeaking: boolean;
+  speechTrace: SpeechTraceState | null;
+  activeLearningCheck: ActiveLearningCheck | null;
+  voiceRecorder: ReactNode;
+  promptText: string;
+  onQuestionChange: (question: string) => void;
+  onSend: () => void;
+  onSkipLearningCheck: () => void;
+  onSpeakLast: () => void;
+  onStopSpeaking: () => void;
+  onNewSession: () => void;
+  onCloseListenMode: () => void;
+  onHearPrompt: () => void;
+}) {
+  const visibleMessages = messages.filter((message) => message.role !== "system");
+  const latestAssistant = visibleMessages.filter((message) => message.role === "assistant").at(-1);
+  const latestUser = visibleMessages.filter((message) => message.role === "user").at(-1);
+  const [typeOpen, setTypeOpen] = useState(false);
+  const traceablePromptMessageId = !activeLearningCheck && latestAssistant?.content.trim() ? latestAssistant.id : null;
+  const currentModeLabel = tutorSpeaking
+    ? "Phloem is speaking"
+    : busy
+      ? "Phloem is thinking"
+      : activeLearningCheck
+        ? "Your turn"
+        : "Press the microphone";
+  const currentPrompt = activeLearningCheck?.question || latestAssistant?.content || promptText;
+
+  return (
+    <main className="listen-shell listen-session-shell listen-one-screen">
+      <header className="one-button-topbar">
+        <div className="one-button-page-chip">
+          <div className="one-button-thumb">
+            {selectedMaterial?.imageDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- Local camera data URL thumbnail.
+              <img src={selectedMaterial.imageDataUrl} alt={selectedMaterial.name} />
+            ) : (
+              <FileText size={24} aria-hidden />
+            )}
+          </div>
+          <div>
+            <strong>{sessionTitle}</strong>
+            <span>
+              {sessionLanguage}
+              {materials.length > 1 ? ` • ${materials.length} pages` : ""}
+            </span>
+          </div>
+        </div>
+
+        <div className="one-button-top-actions">
+          <button type="button" onClick={onCloseListenMode}>
+            <LayoutDashboard size={18} aria-hidden />
+            Dashboard
+          </button>
+          <button type="button" onClick={onNewSession}>
+            <PlusSquare size={18} aria-hidden />
+            New page
+          </button>
+        </div>
+      </header>
+
+      <section className="one-button-stage" aria-label="Voice tutor">
+        <div className={`one-button-orb ${tutorSpeaking ? "speaking" : ""} ${busy ? "busy" : ""}`}>
+          <div className="one-button-mic-wrap">{voiceRecorder}</div>
+        </div>
+
+        <div className="one-button-state">
+          <span>{currentModeLabel}</span>
+        </div>
+
+        <div className="one-button-prompt">
+          <span className="one-button-prompt-label">
+            {activeLearningCheck ? "Question" : latestAssistant ? "Phloem said" : "Start here"}
+          </span>
+          <div className="one-button-prompt-text" tabIndex={0}>
+            <ListenPromptText text={currentPrompt} messageId={traceablePromptMessageId} speechTrace={speechTrace} />
+          </div>
+        </div>
+
+        {latestUser && (
+          <p className="one-button-last-user">
+            You said: <span>{latestUser.content}</span>
+          </p>
+        )}
+
+        <div className="one-button-actions" aria-label="Helpful actions">
+          <button type="button" onClick={onHearPrompt}>
+            <Volume2 size={18} aria-hidden />
+            Help
+          </button>
+          <button type="button" onClick={onSpeakLast} disabled={busy}>
+            <Volume2 size={18} aria-hidden />
+            Repeat
+          </button>
+          {tutorSpeaking ? (
+            <button type="button" onClick={onStopSpeaking}>
+              Stop
+            </button>
+          ) : (
+            <button type="button" onClick={() => setTypeOpen((current) => !current)}>
+              Type
+            </button>
+          )}
+          {activeLearningCheck?.status === "unanswered" && (
+            <button type="button" onClick={onSkipLearningCheck} disabled={busy}>
+              Skip
+            </button>
+          )}
+        </div>
+
+        {typeOpen && (
+          <div className="one-button-type-row">
+            <textarea
+              value={question}
+              disabled={busy}
+              rows={1}
+              placeholder="Type instead"
+              onChange={(event) => onQuestionChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  onSend();
+                }
+              }}
+            />
+            <button type="button" onClick={onSend} disabled={busy || !question.trim()}>
+              Send
+            </button>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+function ListenPromptText({
+  text,
+  messageId,
+  speechTrace
+}: {
+  text: string;
+  messageId: string | null | undefined;
+  speechTrace: SpeechTraceState | null;
+}) {
+  const textRef = useRef<HTMLParagraphElement | null>(null);
+
+  useEffect(() => {
+    if (!messageId || speechTrace?.messageId !== messageId) {
+      return;
+    }
+
+    const currentWord = textRef.current?.querySelector(".speech-word.current");
+    currentWord?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [messageId, speechTrace]);
+
+  if (!messageId || speechTrace?.messageId !== messageId) {
+    return <p ref={textRef}>{text}</p>;
+  }
+
+  const parts = getSpeechTraceParts(text);
+
+  return (
+    <p ref={textRef} className="speech-trace-text">
+      {parts.map((part, index) => {
+        if (part.wordIndex === null) {
+          return part.text;
+        }
+
+        const state =
+          part.wordIndex < speechTrace.wordIndex
+            ? "spoken"
+            : part.wordIndex === speechTrace.wordIndex
+              ? "current"
+              : "pending";
+
+        return (
+          <span key={`${part.text}-${index}`} className={`speech-word ${state}`}>
+            {part.text}
+          </span>
+        );
+      })}
+    </p>
+  );
+}
+
+function ListenStatus({ status, error }: { status: string; error: string }) {
+  if (!status && !error) {
+    return null;
+  }
+
+  return <p className={error ? "listen-status error" : "listen-status"}>{error || status}</p>;
 }
 
 function formatBytes(bytes: number) {

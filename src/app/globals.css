@@ -4881,7 +4881,7 @@ select:disabled {
 
 .one-button-page-chip {
   min-width: 0;
-  width: fit-content;
+  width: min(420px, 42vw);
   justify-self: start;
   border: 1px solid #dce8df;
   border-radius: 8px;
@@ -4890,6 +4890,10 @@ select:disabled {
   display: flex;
   align-items: center;
   gap: 11px;
+}
+
+.one-button-page-chip > div:not(.one-button-thumb) {
+  min-width: 0;
 }
 
 .one-button-thumb {
@@ -5284,6 +5288,10 @@ select:disabled {
   .one-button-page-chip strong,
   .one-button-page-chip span {
     max-width: 78vw;
+  }
+
+  .one-button-page-chip {
+    width: min(420px, 100%);
   }
 }
 

@@ -20,7 +20,9 @@ import {
   House,
   LayoutDashboard,
   Leaf,
+  Maximize2,
   MessageSquare,
+  Minimize2,
   MoreVertical,
   PlayCircle,
   PlusSquare,
@@ -657,6 +659,7 @@ export default function Home() {
   const [ttsUsageError, setTtsUsageError] = useState("");
   const [listenMode, setListenMode] = useState(false);
   const [listenTextSizeStep, setListenTextSizeStep] = useState(0);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
 
   // Settings view state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -2560,39 +2563,105 @@ export default function Home() {
                 </div>
               </header>
 
-              <div className="session-workspace">
-                <MaterialRail
-                  materials={materials}
-                  selectedMaterialId={selectedMaterial?.id ?? null}
-                  onSelect={setSelectedMaterialId}
-                />
+              <div className={`session-workspace${documentViewerOpen ? " dashboard-split-view" : ""}`}>
+                {documentViewerOpen ? (
+                  <>
+                    <aside className="dashboard-document-viewer" aria-label="Document viewer">
+                      <div className="document-viewer-header">
+                        <h3>{selectedMaterial?.name ?? "Document"}</h3>
+                        <button
+                          type="button"
+                          className="document-viewer-close"
+                          onClick={() => setDocumentViewerOpen(false)}
+                          aria-label="Collapse document view"
+                        >
+                          <Minimize2 size={16} aria-hidden />
+                        </button>
+                      </div>
+                      <div className="document-viewer-content">
+                        {selectedMaterial?.imageDataUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- Local camera data URL for document viewing.
+                          <img src={selectedMaterial.imageDataUrl} alt={selectedMaterial.name} className="document-viewer-image" />
+                        ) : selectedMaterial?.dataUrl && isPdfMaterial(selectedMaterial) ? (
+                          <iframe
+                            src={`${selectedMaterial.dataUrl}#toolbar=0&navpanes=0`}
+                            title={selectedMaterial.name}
+                            className="document-viewer-pdf"
+                          />
+                        ) : (
+                          <div className="document-viewer-placeholder">
+                            <FileText size={48} aria-hidden />
+                            <p>No preview available</p>
+                          </div>
+                        )}
+                      </div>
+                    </aside>
 
-                <ConversationPanel
-                  messages={messages}
-                  question={question}
-                  busy={busy}
-                  status={status}
-                  error={error}
-                  responseStopped={tutorStopped}
-                  tutorSpeaking={tutorSpeaking}
-                  speechTrace={speechTrace}
-                  understandingLevel={understandingLevel}
-                  activeLearningCheck={activeLearningCheck}
-                  quickActions={quickActions}
-                  onQuestionChange={setQuestion}
-                  onEditMessage={handleEditMessage}
-                  onSend={() => void submitQuestion()}
-                  onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
-                  onSkipLearningCheck={handleSkipActiveLearningCheck}
-                  onStopResponding={handleStopTutorResponse}
-                  onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
-                  onSpeakLast={() =>
-                    void speakText(lastAssistantMessage?.content || learningContext?.suggestedQuestion || "", {
-                      traceMessageId: lastAssistantMessage?.id
-                    })
-                  }
-                  voiceRecorder={voiceRecorderControl}
-                />
+                    <ConversationPanel
+                      messages={messages}
+                      question={question}
+                      busy={busy}
+                      status={status}
+                      error={error}
+                      responseStopped={tutorStopped}
+                      tutorSpeaking={tutorSpeaking}
+                      speechTrace={speechTrace}
+                      understandingLevel={understandingLevel}
+                      activeLearningCheck={activeLearningCheck}
+                      quickActions={quickActions}
+                      onQuestionChange={setQuestion}
+                      onEditMessage={handleEditMessage}
+                      onSend={() => void submitQuestion()}
+                      onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
+                      onSkipLearningCheck={handleSkipActiveLearningCheck}
+                      onStopResponding={handleStopTutorResponse}
+                      onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
+                      onSpeakLast={() =>
+                        void speakText(lastAssistantMessage?.content || learningContext?.suggestedQuestion || "", {
+                          traceMessageId: lastAssistantMessage?.id
+                        })
+                      }
+                      voiceRecorder={voiceRecorderControl}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <MaterialRail
+                      materials={materials}
+                      selectedMaterialId={selectedMaterial?.id ?? null}
+                      onSelect={setSelectedMaterialId}
+                      documentViewerOpen={documentViewerOpen}
+                      onToggleDocumentViewer={() => setDocumentViewerOpen((current) => !current)}
+                    />
+
+                    <ConversationPanel
+                      messages={messages}
+                      question={question}
+                      busy={busy}
+                      status={status}
+                      error={error}
+                      responseStopped={tutorStopped}
+                      tutorSpeaking={tutorSpeaking}
+                      speechTrace={speechTrace}
+                      understandingLevel={understandingLevel}
+                      activeLearningCheck={activeLearningCheck}
+                      quickActions={quickActions}
+                      onQuestionChange={setQuestion}
+                      onEditMessage={handleEditMessage}
+                      onSend={() => void submitQuestion()}
+                      onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
+                      onSkipLearningCheck={handleSkipActiveLearningCheck}
+                      onStopResponding={handleStopTutorResponse}
+                      onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
+                      onSpeakLast={() =>
+                        void speakText(lastAssistantMessage?.content || learningContext?.suggestedQuestion || "", {
+                          traceMessageId: lastAssistantMessage?.id
+                        })
+                      }
+                      voiceRecorder={voiceRecorderControl}
+                    />
+                  </>
+                )}
               </div>
             </>
           )}
@@ -2640,40 +2709,106 @@ export default function Home() {
         <div key={phase} className="phase-container">
           {/* ===== TWO-PANEL WORKSPACE ===== */}
           {phase === "review" && (
-            <div className="workspace-layout">
-              <MaterialRail
-                materials={materials}
-                selectedMaterialId={selectedMaterial?.id ?? null}
-                onSelect={setSelectedMaterialId}
-              />
+            <div className={`workspace-layout${documentViewerOpen ? " dashboard-split-view" : ""}`}>
+              {documentViewerOpen ? (
+                <>
+                  <aside className="dashboard-document-viewer" aria-label="Document viewer">
+                    <div className="document-viewer-header">
+                      <h3>{selectedMaterial?.name ?? "Document"}</h3>
+                      <button
+                        type="button"
+                        className="document-viewer-close"
+                        onClick={() => setDocumentViewerOpen(false)}
+                        aria-label="Collapse document view"
+                      >
+                        <Minimize2 size={16} aria-hidden />
+                      </button>
+                    </div>
+                    <div className="document-viewer-content">
+                      {selectedMaterial?.imageDataUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- Local camera data URL for document viewing.
+                        <img src={selectedMaterial.imageDataUrl} alt={selectedMaterial.name} className="document-viewer-image" />
+                      ) : selectedMaterial?.dataUrl && isPdfMaterial(selectedMaterial) ? (
+                        <iframe
+                          src={`${selectedMaterial.dataUrl}#toolbar=0&navpanes=0`}
+                          title={selectedMaterial.name}
+                          className="document-viewer-pdf"
+                        />
+                      ) : (
+                        <div className="document-viewer-placeholder">
+                          <FileText size={48} aria-hidden />
+                          <p>No preview available</p>
+                        </div>
+                      )}
+                    </div>
+                  </aside>
 
-              <ConversationPanel
-                messages={messages}
-                question={question}
-                busy={busy}
-                status={status}
-                error={error}
-                responseStopped={tutorStopped}
-                tutorSpeaking={tutorSpeaking}
-                speechTrace={speechTrace}
-                understandingLevel={understandingLevel}
-                activeLearningCheck={activeLearningCheck}
-                quickActions={quickActions}
-                onQuestionChange={setQuestion}
-                onEditMessage={handleEditMessage}
-                onSend={() => void submitQuestion()}
-                onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
-                onSkipLearningCheck={handleSkipActiveLearningCheck}
-                onStopResponding={handleStopTutorResponse}
-                onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
-                onSpeakLast={() =>
-                  void speakText(lastAssistantMessage?.content || learningContext?.suggestedQuestion || "", {
-                    traceMessageId: lastAssistantMessage?.id
-                  })
-                }
-                voiceRecorder={voiceRecorderControl}
-              />
-            </div>
+                  <ConversationPanel
+                    messages={messages}
+                    question={question}
+                    busy={busy}
+                    status={status}
+                    error={error}
+                    responseStopped={tutorStopped}
+                    tutorSpeaking={tutorSpeaking}
+                    speechTrace={speechTrace}
+                    understandingLevel={understandingLevel}
+                    activeLearningCheck={activeLearningCheck}
+                    quickActions={quickActions}
+                    onQuestionChange={setQuestion}
+                    onEditMessage={handleEditMessage}
+                    onSend={() => void submitQuestion()}
+                    onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
+                    onSkipLearningCheck={handleSkipActiveLearningCheck}
+                    onStopResponding={handleStopTutorResponse}
+                    onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
+                    onSpeakLast={() =>
+                      void speakText(lastAssistantMessage?.content || learningContext?.suggestedQuestion || "", {
+                        traceMessageId: lastAssistantMessage?.id
+                      })
+                    }
+                    voiceRecorder={voiceRecorderControl}
+                  />
+                </>
+              ) : (
+                  <>
+                    <MaterialRail
+                      materials={materials}
+                      selectedMaterialId={selectedMaterial?.id ?? null}
+                      onSelect={setSelectedMaterialId}
+                      documentViewerOpen={documentViewerOpen}
+                      onToggleDocumentViewer={() => setDocumentViewerOpen((current) => !current)}
+                    />
+
+                    <ConversationPanel
+                      messages={messages}
+                      question={question}
+                      busy={busy}
+                      status={status}
+                      error={error}
+                      responseStopped={tutorStopped}
+                      tutorSpeaking={tutorSpeaking}
+                      speechTrace={speechTrace}
+                      understandingLevel={understandingLevel}
+                      activeLearningCheck={activeLearningCheck}
+                      quickActions={quickActions}
+                      onQuestionChange={setQuestion}
+                      onEditMessage={handleEditMessage}
+                      onSend={() => void submitQuestion()}
+                      onQuickAction={(text) => void submitQuestion(text, { skipLearningCheck: true })}
+                      onSkipLearningCheck={handleSkipActiveLearningCheck}
+                      onStopResponding={handleStopTutorResponse}
+                      onStopSpeaking={() => stopTutorSpeech("Tutor speech stopped")}
+                      onSpeakLast={() =>
+                        void speakText(lastAssistantMessage?.content || learningContext?.suggestedQuestion || "", {
+                          traceMessageId: lastAssistantMessage?.id
+                        })
+                      }
+                      voiceRecorder={voiceRecorderControl}
+                    />
+                  </>
+                )}
+              </div>
           )}
         </div>
       </div>
@@ -2863,11 +2998,15 @@ function LanguageMenu({
 function MaterialRail({
   materials,
   selectedMaterialId,
-  onSelect
+  onSelect,
+  documentViewerOpen,
+  onToggleDocumentViewer
 }: {
   materials: CapturedMaterial[];
   selectedMaterialId: string | null;
   onSelect: (id: string) => void;
+  documentViewerOpen?: boolean;
+  onToggleDocumentViewer?: () => void;
 }) {
   const selectedMaterial = materials.find((material) => material.id === selectedMaterialId) ?? materials.at(-1);
 
@@ -2875,6 +3014,17 @@ function MaterialRail({
     <aside className="material-rail" aria-label="Submitted learning material">
       <div className="material-rail-header">
         <h2>Material</h2>
+        {onToggleDocumentViewer && materials.length > 0 && (
+          <button
+            className={`rail-icon-btn ${documentViewerOpen ? "active" : ""}`}
+            type="button"
+            onClick={onToggleDocumentViewer}
+            title={documentViewerOpen ? "Collapse document view" : "Expand document side-by-side"}
+            aria-pressed={documentViewerOpen}
+          >
+            {documentViewerOpen ? <Minimize2 size={16} aria-hidden /> : <Maximize2 size={16} aria-hidden />}
+          </button>
+        )}
       </div>
 
       <div className="material-strip">

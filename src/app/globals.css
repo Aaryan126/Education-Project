@@ -3387,6 +3387,47 @@ select:disabled {
 }
 
 /* ============================================================
+   DASHBOARD SPLIT DOCUMENT VIEWER
+   ============================================================ */
+
+/* MaterialRail expand button */
+.material-rail-header .rail-icon-btn.active {
+  color: #008761;
+  border-color: rgba(0, 135, 97, 0.3);
+  background: #eaf7f1;
+}
+
+/* Split view active state for both workspace layouts */
+.dashboard-split-view.session-workspace,
+.dashboard-split-view.workspace-layout {
+  grid-template-columns: minmax(0, 50%) minmax(0, 50%);
+}
+
+.dashboard-split-view.session-workspace {
+  gap: 12px;
+}
+
+.dashboard-split-view.workspace-layout {
+  gap: 16px;
+}
+
+.dashboard-document-viewer {
+  background: white;
+  border: 1px solid #dce8df;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* In split view, give the conversation panel a subtle left accent */
+.dashboard-split-view .conversation-panel {
+  border-left: 3px solid rgba(0, 135, 97, 0.08);
+}
+
+/* ============================================================
    VOICE RECORDER (Hero Mic Button)
    ============================================================ */
 .voice-control {
@@ -4253,6 +4294,18 @@ select:disabled {
     min-height: auto;
   }
 
+  /* Dashboard split view: stack vertically on medium screens */
+  .dashboard-split-view.session-workspace,
+  .dashboard-split-view.workspace-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 40vh) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .dashboard-document-viewer {
+    max-height: 45vh;
+  }
+
   .material-rail {
     max-height: none;
   }
@@ -4464,6 +4517,18 @@ select:disabled {
   .workspace-layout {
     gap: 12px;
     padding-top: 12px;
+  }
+
+  /* Dashboard split view on small screens: stack, doc takes less space */
+  .dashboard-split-view.session-workspace,
+  .dashboard-split-view.workspace-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 35vh) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .dashboard-document-viewer {
+    max-height: 38vh;
   }
 
   .session-main {

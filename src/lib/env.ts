@@ -2,15 +2,28 @@ import { z } from "zod";
 
 const optionalString = z.preprocess((value) => (value === "" ? undefined : value), z.string().optional());
 const optionalUrl = z.preprocess((value) => (value === "" ? undefined : value), z.string().url().optional());
+const defaultString = (defaultValue: string) =>
+  z.preprocess((value) => (value === "" ? undefined : value), z.string().default(defaultValue));
+const defaultUrl = (defaultValue: string) =>
+  z.preprocess((value) => (value === "" ? undefined : value), z.string().url().default(defaultValue));
+
+export const DEFAULT_ZAI_BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
 
 const envSchema = z.object({
   ANTHROPIC_API_KEY: optionalString,
   OPENAI_API_KEY: optionalString,
   ZAI_API_KEY: optionalString,
-  ZAI_BASE_URL: optionalUrl,
-  LLM_PROVIDER: z.enum(["anthropic", "zai"]).default("anthropic"),
+  ZAI_BASE_URL: defaultUrl(DEFAULT_ZAI_BASE_URL),
+  ZAI_THINKING_TYPE: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.enum(["enabled", "disabled"]).default("enabled")
+  ),
+  LLM_PROVIDER: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.enum(["anthropic", "zai"]).default("zai")
+  ),
   ANTHROPIC_MODEL: z.string().default("claude-sonnet-4-6"),
-  ZAI_MODEL: z.string().default("glm-4.6"),
+  ZAI_MODEL: defaultString("glm-5.1"),
   OPENAI_VISION_MODEL: z.string().default("gpt-4o"),
   OPENAI_STT_MODEL: z.string().default("gpt-4o-transcribe"),
   TTS_PROVIDER: z.enum(["browser", "openai", "google"]).default("browser"),
@@ -61,10 +74,6 @@ export function getMissingRuntimeKeys(env = getEnv()) {
     missing.push("ZAI_API_KEY");
   }
 
-  if (env.LLM_PROVIDER === "zai" && !env.ZAI_BASE_URL) {
-    missing.push("ZAI_BASE_URL");
-  }
-
   return missing;
 }
 
@@ -84,10 +93,6 @@ export function requireTutorProviderKeys(env = getEnv()) {
   if (env.LLM_PROVIDER === "zai") {
     if (!env.ZAI_API_KEY) {
       throw new Error("ZAI_API_KEY is required when LLM_PROVIDER=zai.");
-    }
-
-    if (!env.ZAI_BASE_URL) {
-      throw new Error("ZAI_BASE_URL is required when LLM_PROVIDER=zai.");
     }
   }
 }

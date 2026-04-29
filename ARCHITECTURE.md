@@ -33,7 +33,7 @@ Material processing starts in `src/app/page.tsx`. Images are sent to `/api/visio
 2. Classify the latest learner turn with `src/lib/tutor/intent.ts` as a normal question, check answer, summary request, direct-answer request, practice request, translation/read-aloud request, or off-topic turn.
 3. Build prompts with `src/lib/tutor/prompt.ts`. The system prompt contains tutor behavior and safety rules only. Uploaded material is passed as explicitly untrusted context in the user prompt.
 4. Attach voice interaction signals when the latest learner turn came from hands-free voice. These signals are soft context only, such as incomplete pauses, long-silence fallback, segment count, answer duration, short or numeric answer flags, and transcript uncertainty markers.
-5. Call the configured provider from `src/lib/llm`. Anthropic uses a strict tool schema; Z.ai uses JSON mode.
+5. Call the configured provider from `src/lib/llm`. Z.ai GLM-5.1 is the default provider and uses JSON mode; Anthropic remains an optional fallback with a strict tool schema.
 6. Return structured tutor output, including response, follow-up question, target concept, tutor move, memory update candidates, and the updated session memory.
 
 The tutor remains model-stateless. Durable continuity comes from app-owned memory, saved messages, saved progress checks, and concept mastery rows.

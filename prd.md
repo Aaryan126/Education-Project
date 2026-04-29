@@ -354,7 +354,7 @@ Browser Input            Image / PDF / DOCX                   Audio Recording
         /api/tutor/respond
                 |
           TutorEngine
-   (Anthropic Claude Sonnet 4.6  OR  Z.ai GLM)
+   (Z.ai GLM-5.1 default; Anthropic optional)
                 |
           TutorResponse (JSON)
                 |
@@ -395,8 +395,8 @@ ConversationPanel  /api/speech/synthesize
 | Vision / OCR | OpenAI GPT-4o | Structured JSON output, high-detail image analysis |
 | Document Parsing | `pdf-parse` (pdfjs-dist worker) + `mammoth` | Server-side text extraction |
 | STT | OpenAI GPT-4o-transcribe | Audio transcription from browser recordings |
-| Tutor LLM (primary) | Anthropic Claude Sonnet 4.6 | Tool-use capable, high reasoning quality |
-| Tutor LLM (alt) | Z.ai GLM (OpenAI-compatible) | Switchable via `LLM_PROVIDER` env var |
+| Tutor LLM (primary) | Z.ai GLM-5.1 | Default core tutor/evaluator brain; OpenAI-compatible chat completions API |
+| Tutor LLM (fallback) | Anthropic Claude Sonnet 4.6 | Optional fallback via `LLM_PROVIDER=anthropic` |
 | TTS (primary) | Google Cloud TTS Chirp 3 HD | SSML word marks, streaming, free tier |
 | TTS (secondary) | OpenAI gpt-4o-mini-tTS | MP3 + PCM streaming support |
 | TTS (fallback) | Browser Web Speech API | Zero-config, works everywhere |
@@ -417,8 +417,8 @@ interface LLMProvider {
 ```
 
 Factory function `getTutorProvider()` reads `LLM_PROVIDER` env var:
-- `"anthropic"` (default) -> `AnthropicTutorProvider` via `@anthropic-ai/sdk`
-- `"zai"` -> `ZaiTutorProvider` via OpenAI SDK with custom base URL
+- `"zai"` (default) -> `ZaiTutorProvider` via OpenAI SDK with the official Z.ai base URL
+- `"anthropic"` -> `AnthropicTutorProvider` via `@anthropic-ai/sdk`
 
 Both providers share:
 - Common `buildTutorSystemPrompt()` / `buildTutorUserPrompt()` from `src/lib/tutor/prompt.ts`
@@ -591,11 +591,12 @@ All behavior is configurable via environment variables (validated by Zod schema 
 |---|---|---|
 | `ANTHROPIC_API_KEY` | *(required if LLM_PROVIDER=anthropic)* | Claude API key |
 | `OPENAI_API_KEY` | *(required)* | Vision, STT, OpenAI TTS |
-| `ZAI_API_KEY` | *(required if LLM_PROVIDER=zai)* | Alternative LLM provider |
-| `ZAI_BASE_URL` | *(required if LLM_PROVIDER=zai)* | Z.ai endpoint |
-| `LLM_PROVIDER` | `anthropic` | Which tutor LLM to use |
+| `ZAI_API_KEY` | *(required if LLM_PROVIDER=zai)* | Z.ai GLM tutor/evaluator provider |
+| `ZAI_BASE_URL` | `https://open.bigmodel.cn/api/paas/v4` | Optional Z.ai API base URL override |
+| `ZAI_THINKING_TYPE` | `enabled` | GLM thinking mode sent with Z.ai tutor/evaluator requests |
+| `LLM_PROVIDER` | `zai` | Which tutor/evaluator LLM to use |
 | `ANTHROPIC_MODEL` | `claude-sonnet-4-6` | Claude model ID |
-| `ZAI_MODEL` | `glm-4.6` | Z.ai model ID |
+| `ZAI_MODEL` | `glm-5.1` | Z.ai model ID |
 | `OPENAI_VISION_MODEL` | `gpt-4o` | Vision extraction model |
 | `OPENAI_STT_MODEL` | `gpt-4o-transcribe` | Speech-to-text model |
 | `TTS_PROVIDER` | `browser` | Active TTS backend |
@@ -686,8 +687,8 @@ All behavior is configurable via environment variables (validated by Zod schema 
 ### Why turn-based (not real-time) responses?
 Per Plan Phase 7: The initial version is intentionally turn-based to reduce demo risk and complexity. Streaming will be added as an enhancement.
 
-### Why two (three) LLM providers?
-Hackathon requirement for Z.ai GLM support plus production preference for Anthropic Claude. The abstraction layer makes switching a single env var change.
+### Why two LLM providers?
+The hackathon build now defaults to Z.ai GLM-5.1 for the tutor response and retrieval-check evaluator. Anthropic remains available as an optional fallback so the abstraction layer can still switch providers with one env var when needed.
 
 ### Why three-tier TTS?
 Google offers the best quality (Chirp 3 HD) with word-level timing for highlighting, plus a generous free tier. OpenAI provides strong fallback with streaming. Browser speechSynthesis ensures zero-config functionality even with no API keys.

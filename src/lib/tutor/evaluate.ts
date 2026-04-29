@@ -1,9 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
-import OpenAI from "openai";
 import { getEnv, requireTutorProviderKeys } from "@/lib/env";
+import { buildZaiJsonRequest, createZaiClient } from "@/lib/llm/zaiChat";
 import { normalizeConfidence } from "@/lib/modelOutput";
 import type { LearningCheckEvaluation, LearningCheckStatus, LearningContext, VoiceInteractionSignals } from "@/lib/tutor/types";
 import { formatVoiceInteractionSignals } from "@/lib/tutor/voiceSignals";
+
+const ZAI_EVALUATION_MAX_TOKENS = 600;
 
 type EvaluateLearningCheckInput = {
   learningContext?: LearningContext | null;
@@ -122,15 +124,11 @@ export async function evaluateLearningCheck(input: EvaluateLearningCheckInput): 
   const fallbackConcept = input.learningContext?.topic || "Current concept";
 
   if (env.LLM_PROVIDER === "zai") {
-    const client = new OpenAI({
-      apiKey: env.ZAI_API_KEY,
-      baseURL: env.ZAI_BASE_URL
-    });
+    const client = createZaiClient(env);
 
-    const response = await client.chat.completions.create({
-      model: env.ZAI_MODEL,
+    const response = await client.chat.completions.create(buildZaiJsonRequest(env, {
       temperature: 0.1,
-      response_format: { type: "json_object" },
+      maxTokens: ZAI_EVALUATION_MAX_TOKENS,
       messages: [
         {
           role: "system",
@@ -141,7 +139,7 @@ export async function evaluateLearningCheck(input: EvaluateLearningCheckInput): 
           content: buildEvaluationUserPrompt(input)
         }
       ]
-    });
+    }));
 
     return normalizeEvaluation(parseEvaluationJson(response.choices[0]?.message.content ?? ""), "zai", fallbackConcept);
   }

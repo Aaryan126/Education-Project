@@ -1,9 +1,11 @@
-import OpenAI from "openai";
 import { getEnv, requireTutorProviderKeys } from "@/lib/env";
 import { normalizeConfidence } from "@/lib/modelOutput";
 import { buildTutorSystemPrompt, buildTutorUserPrompt, normalizeTutorMove, parseTutorJson } from "@/lib/tutor/prompt";
 import type { TutorRequest, TutorResponse } from "@/lib/tutor/types";
 import type { LLMProvider } from "./types";
+import { buildZaiJsonRequest, createZaiClient } from "./zaiChat";
+
+const ZAI_TUTOR_MAX_TOKENS = 2048;
 
 export class ZaiTutorProvider implements LLMProvider {
   readonly name = "zai";
@@ -12,15 +14,11 @@ export class ZaiTutorProvider implements LLMProvider {
     const env = getEnv();
     requireTutorProviderKeys(env);
 
-    const client = new OpenAI({
-      apiKey: env.ZAI_API_KEY,
-      baseURL: env.ZAI_BASE_URL
-    });
+    const client = createZaiClient(env);
 
-    const response = await client.chat.completions.create({
-      model: env.ZAI_MODEL,
+    const response = await client.chat.completions.create(buildZaiJsonRequest(env, {
       temperature: 0.4,
-      response_format: { type: "json_object" },
+      maxTokens: ZAI_TUTOR_MAX_TOKENS,
       messages: [
         {
           role: "system",
@@ -31,7 +29,7 @@ export class ZaiTutorProvider implements LLMProvider {
           content: buildTutorUserPrompt(input)
         }
       ]
-    });
+    }));
 
     const text = response.choices[0]?.message.content ?? "";
     const parsed = parseTutorJson(text);

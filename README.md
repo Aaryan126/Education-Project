@@ -7,7 +7,7 @@ Phloem is a Next.js learning companion that turns a captured image, PDF, or Word
 1. Capture material from camera, upload, paste, or link.
 2. Extract text and learning context with OpenAI vision/text models.
 3. Route each learner turn by intent, such as answer check, summary, direct-answer request, or practice.
-4. Generate a structured tutor response with Anthropic or Z.ai using layered context: recent turns, session memory, a lightweight single-user learner profile, and the extracted learning context.
+4. Generate a structured tutor response with Z.ai GLM-5.1 by default, using layered context: recent turns, session memory, a lightweight single-user learner profile, and the extracted learning context. Anthropic remains an optional fallback provider.
 5. Speak the response with browser TTS, OpenAI TTS, or Google Cloud TTS.
 6. After speech playback completes, ask one retrieval-practice progress check.
 7. If a check is active, score the learner's answer first, update concept mastery, then pass the evaluation into the next tutor turn for corrective feedback.
@@ -43,6 +43,13 @@ python3 -m pip install -r requirements-smart-turn.txt
 If you want real local Smart Turn, place `smart-turn-v3.2-cpu.onnx` at `models/smart-turn-v3.2-cpu.onnx` or set `SMART_TURN_MODEL_PATH`.
 
 Copy `.env.example` to `.env` and fill the provider keys you use. Keep Supabase service role keys in `.env` only.
+
+The default tutor/evaluator provider is Z.ai GLM-5.1:
+
+- `LLM_PROVIDER=zai`
+- `ZAI_MODEL=glm-5.1`
+- `ZAI_BASE_URL=` may be left blank; the app defaults to `https://open.bigmodel.cn/api/paas/v4`
+- set `LLM_PROVIDER=anthropic` only when intentionally switching the tutor/evaluator back to Claude
 
 If you use Supabase persistence, run `supabase/schema.sql` in the Supabase SQL Editor. The schema creates sessions, materials, messages, learning checks, concept mastery, session memories, and TTS usage tables. It is intended to be rerunnable; RPC functions are dropped and recreated without deleting usage rows.
 

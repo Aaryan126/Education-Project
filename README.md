@@ -22,6 +22,7 @@ Phloem includes an alternate voice-first UI for the core low-literacy audience. 
 - the session view centers one microphone button, one changing cue, the tutor text, and a few simple actions
 - tutor speech traces inline across the full response text instead of showing a dense chat thread
 - long tutor text scrolls inside the response area while the page itself stays fixed to one viewport
+- tutor text starts at the default minimum size and can be enlarged from `A-` / `A+` controls in the top action row
 - active recording turns the mic and animated orb rings red; recorder status hints are hidden in this simplified mode
 - learners can still switch back to the full dashboard or start a new page from the top actions
 

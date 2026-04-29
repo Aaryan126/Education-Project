@@ -235,6 +235,8 @@ const MIN_TTS_SPEECH_RATE = 0.75;
 const MAX_TTS_SPEECH_RATE = 1.5;
 const LAST_SESSION_STORAGE_KEY = "phloem:last-session-id";
 const LISTEN_MODE_STORAGE_KEY = "phloem:listen-mode";
+const LISTEN_TEXT_SIZE_STORAGE_KEY = "phloem:listen-text-size-step";
+const MAX_LISTEN_TEXT_SIZE_STEP = 3;
 const SESSION_PROGRESS_STORAGE_PREFIX = "phloem:session-progress:";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -512,6 +514,14 @@ function clampTtsSpeechRate(value: number) {
   return Math.min(MAX_TTS_SPEECH_RATE, Math.max(MIN_TTS_SPEECH_RATE, value));
 }
 
+function clampListenTextSizeStep(value: number) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(MAX_LISTEN_TEXT_SIZE_STEP, Math.max(0, Math.floor(value)));
+}
+
 function scaleSpeechTimings(timings: SpeechTimingPoint[] | undefined, speechRate: number) {
   if (!timings || timings.length === 0 || speechRate === 1) {
     return timings;
@@ -643,6 +653,7 @@ export default function Home() {
   const [ttsUsageLoading, setTtsUsageLoading] = useState(false);
   const [ttsUsageError, setTtsUsageError] = useState("");
   const [listenMode, setListenMode] = useState(false);
+  const [listenTextSizeStep, setListenTextSizeStep] = useState(0);
 
   // Settings view state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -702,9 +713,13 @@ export default function Home() {
       try {
         listenModeStorageReadyRef.current = true;
         setListenMode(window.localStorage.getItem(LISTEN_MODE_STORAGE_KEY) === "1");
+        setListenTextSizeStep(
+          clampListenTextSizeStep(Number(window.localStorage.getItem(LISTEN_TEXT_SIZE_STORAGE_KEY) ?? 0))
+        );
       } catch {
         listenModeStorageReadyRef.current = true;
         setListenMode(false);
+        setListenTextSizeStep(0);
       }
     }, 0);
 
@@ -722,6 +737,18 @@ export default function Home() {
       // localStorage can be unavailable in private or restricted browser modes.
     }
   }, [listenMode]);
+
+  useEffect(() => {
+    if (!listenModeStorageReadyRef.current) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(LISTEN_TEXT_SIZE_STORAGE_KEY, String(listenTextSizeStep));
+    } catch {
+      // localStorage can be unavailable in private or restricted browser modes.
+    }
+  }, [listenTextSizeStep]);
 
   useEffect(() => {
     return () => {
@@ -2150,6 +2177,9 @@ export default function Home() {
         activeLearningCheck={activeLearningCheck}
         voiceRecorder={voiceRecorderControl}
         promptText={listenVisiblePrompt}
+        textSizeStep={listenTextSizeStep}
+        onDecreaseTextSize={() => setListenTextSizeStep((current) => clampListenTextSizeStep(current - 1))}
+        onIncreaseTextSize={() => setListenTextSizeStep((current) => clampListenTextSizeStep(current + 1))}
         onQuestionChange={setQuestion}
         onSend={() => void submitQuestion()}
         onSkipLearningCheck={handleSkipActiveLearningCheck}
@@ -3120,6 +3150,9 @@ function ListenModeSession({
   activeLearningCheck,
   voiceRecorder,
   promptText,
+  textSizeStep,
+  onDecreaseTextSize,
+  onIncreaseTextSize,
   onQuestionChange,
   onSend,
   onSkipLearningCheck,
@@ -3141,6 +3174,9 @@ function ListenModeSession({
   activeLearningCheck: ActiveLearningCheck | null;
   voiceRecorder: ReactNode;
   promptText: string;
+  textSizeStep: number;
+  onDecreaseTextSize: () => void;
+  onIncreaseTextSize: () => void;
   onQuestionChange: (question: string) => void;
   onSend: () => void;
   onSkipLearningCheck: () => void;
@@ -3163,6 +3199,7 @@ function ListenModeSession({
         ? "Your turn"
         : "Press the microphone";
   const currentPrompt = activeLearningCheck?.question || latestAssistant?.content || promptText;
+  const clampedTextSizeStep = clampListenTextSizeStep(textSizeStep);
 
   return (
     <main className="listen-shell listen-session-shell listen-one-screen">
@@ -3182,6 +3219,29 @@ function ListenModeSession({
               {sessionLanguage}
               {materials.length > 1 ? ` • ${materials.length} pages` : ""}
             </span>
+          </div>
+        </div>
+
+        <div className="one-button-header-controls">
+          <div className="one-button-text-size-controls" aria-label="Tutor text size">
+            <button
+              type="button"
+              onClick={onDecreaseTextSize}
+              disabled={clampedTextSizeStep === 0}
+              aria-label="Make tutor text smaller"
+              title="Make tutor text smaller"
+            >
+              A-
+            </button>
+            <button
+              type="button"
+              onClick={onIncreaseTextSize}
+              disabled={clampedTextSizeStep === MAX_LISTEN_TEXT_SIZE_STEP}
+              aria-label="Make tutor text bigger"
+              title="Make tutor text bigger"
+            >
+              A+
+            </button>
           </div>
         </div>
 
@@ -3206,10 +3266,12 @@ function ListenModeSession({
           <span>{currentModeLabel}</span>
         </div>
 
-        <div className="one-button-prompt">
-          <span className="one-button-prompt-label">
-            {activeLearningCheck ? "Question" : latestAssistant ? "Phloem said" : "Start here"}
-          </span>
+        <div className="one-button-prompt" data-text-size={clampedTextSizeStep}>
+          <div className="one-button-prompt-header">
+            <span className="one-button-prompt-label">
+              {activeLearningCheck ? "Question" : latestAssistant ? "Phloem said" : "Start here"}
+            </span>
+          </div>
           <div className="one-button-prompt-text" tabIndex={0}>
             <ListenPromptText text={currentPrompt} messageId={traceablePromptMessageId} speechTrace={speechTrace} />
           </div>

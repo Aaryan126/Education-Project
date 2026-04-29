@@ -315,6 +315,7 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 - Hide recorder micro-status text in Listen Mode when it duplicates the visible cue.
 - Use red mic and red animated rings for active user recording; keep green for idle/tutor states.
 - Keep tutor text readable as normal inline text, with word tracing over the response during TTS playback.
+- Let learners increase tutor text size from the default minimum using `A-` / `A+` controls in the top action row.
 - Put long tutor text in an internal scroll area rather than clipping it or making the full page scroll.
 - Keep escape hatches visible: Full dashboard and New page.
 
@@ -556,6 +557,7 @@ Both providers share:
 - [x] Offer a one-button tutor session with central microphone control and minimal visual choices
 - [x] Keep the active Listen Mode session within one viewport where practical
 - [x] Render tutor text as readable inline text with TTS word tracing
+- [x] Provide simple Listen Mode tutor text-size controls with the current text size as the minimum/default
 - [x] Allow long tutor responses to scroll inside the response area without clipping
 - [x] Use red visual treatment for active user recording, including the mic and animated rings
 - [x] Hide duplicate recorder status text in Listen Mode

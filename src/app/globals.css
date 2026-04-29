@@ -4873,14 +4873,16 @@ select:disabled {
 .one-button-topbar {
   flex: 0 0 auto;
   min-height: 70px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
 }
 
 .one-button-page-chip {
   min-width: 0;
+  width: fit-content;
+  justify-self: start;
   border: 1px solid #dce8df;
   border-radius: 8px;
   padding: 9px 12px 9px 9px;
@@ -4955,6 +4957,17 @@ select:disabled {
   font-weight: 760;
 }
 
+.one-button-header-controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+}
+
+.one-button-top-actions {
+  justify-self: end;
+}
+
 .one-button-stage {
   min-height: 0;
   flex: 1;
@@ -4973,7 +4986,7 @@ select:disabled {
 }
 
 .one-button-orb {
-  width: clamp(180px, 30vh, 300px);
+  width: clamp(176px, 28vh, 280px);
   aspect-ratio: 1;
   border-radius: 50%;
   background:
@@ -5116,6 +5129,41 @@ select:disabled {
   justify-content: center;
 }
 
+.one-button-prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.one-button-text-size-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.one-button-text-size-controls button {
+  width: 46px;
+  min-height: 38px;
+  border-radius: 8px;
+  border: 1px solid #dce3df;
+  background: rgba(255, 255, 255, 0.94);
+  color: #344054;
+  font-size: 17px;
+  line-height: 1;
+  font-weight: 820;
+}
+
+.one-button-text-size-controls button:last-child {
+  font-size: 22px;
+}
+
+.one-button-text-size-controls button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
 .one-button-prompt-text {
   margin: 8px 0 0;
   max-height: clamp(130px, 32vh, 330px);
@@ -5137,6 +5185,21 @@ select:disabled {
 .one-button-prompt-text .speech-word {
   display: inline;
   text-transform: none;
+}
+
+.one-button-prompt[data-text-size="1"] .one-button-prompt-text p {
+  font-size: clamp(21px, 2.8vh, 34px);
+  line-height: 1.32;
+}
+
+.one-button-prompt[data-text-size="2"] .one-button-prompt-text p {
+  font-size: clamp(24px, 3.25vh, 40px);
+  line-height: 1.28;
+}
+
+.one-button-prompt[data-text-size="3"] .one-button-prompt-text p {
+  font-size: clamp(27px, 3.75vh, 46px);
+  line-height: 1.22;
 }
 
 .one-button-last-user {
@@ -5205,8 +5268,13 @@ select:disabled {
   }
 
   .one-button-topbar {
+    grid-template-columns: 1fr;
     align-items: stretch;
-    flex-direction: column;
+  }
+
+  .one-button-header-controls,
+  .one-button-top-actions {
+    justify-self: start;
   }
 
   .one-button-top-actions {
@@ -5315,8 +5383,13 @@ select:disabled {
     gap: 7px;
   }
 
+  .one-button-text-size-controls button {
+    width: 42px;
+    min-height: 34px;
+  }
+
   .one-button-orb {
-    width: clamp(166px, 28vh, 230px);
+    width: clamp(154px, 25vh, 210px);
   }
 
   .one-button-mic-wrap .mic-button {
@@ -5326,7 +5399,7 @@ select:disabled {
   }
 
   .one-button-state {
-    margin-top: clamp(18px, 2.6vh, 28px);
+    margin-top: clamp(14px, 2vh, 22px);
   }
 
   .one-button-prompt-text {

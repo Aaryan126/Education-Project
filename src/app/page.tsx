@@ -2099,10 +2099,6 @@ export default function Home() {
   const sessionLanguage = getLanguageDisplayName(learningContext?.detectedLanguage || "English");
   const sessionPageCount = materials.length || 1;
   const learnScreenOpen = !settingsOpen && !sessionsOpen && !materialsOpen && !progressOpen;
-  const listenCapturePrompt =
-    pendingMaterials.length > 0
-      ? "Your page is ready. Press start listening, then I will read it and help you by voice."
-      : "Take a photo of your page, or choose a file. I will read it and help you by voice.";
   const listenVisiblePrompt =
     activeLearningCheck?.question ||
     lastAssistantMessage?.content ||
@@ -2151,13 +2147,11 @@ export default function Home() {
           pendingMaterials={pendingMaterials}
           targetLanguage={targetLanguage}
           healthStatus={healthStatus}
-          promptText={listenCapturePrompt}
           onMaterialReady={handleMaterialReady}
           onRemovePendingMaterial={handleRemovePendingMaterial}
           onStartSession={() => void handleStartSession()}
           onUseSample={handleUseSample}
           onCloseListenMode={handleCloseListenMode}
-          onHearPrompt={() => speakInterfacePrompt(listenCapturePrompt)}
           onTargetLanguageChange={setTargetLanguage}
         />
       );
@@ -2987,13 +2981,11 @@ function ListenModeCapture({
   pendingMaterials,
   targetLanguage,
   healthStatus,
-  promptText,
   onMaterialReady,
   onRemovePendingMaterial,
   onStartSession,
   onUseSample,
   onCloseListenMode,
-  onHearPrompt,
   onTargetLanguageChange
 }: {
   busy: boolean;
@@ -3002,13 +2994,11 @@ function ListenModeCapture({
   pendingMaterials: PendingMaterial[];
   targetLanguage: string;
   healthStatus: ReactNode;
-  promptText: string;
   onMaterialReady: (material: CapturedInput) => void;
   onRemovePendingMaterial: (materialId: string) => void;
   onStartSession: () => void;
   onUseSample: () => void;
   onCloseListenMode: () => void;
-  onHearPrompt: () => void;
   onTargetLanguageChange: (value: string) => void;
 }) {
   const hasPendingMaterial = pendingMaterials.length > 0;
@@ -3041,42 +3031,38 @@ function ListenModeCapture({
       </header>
 
       <section className="listen-capture-stage">
-        <div className="listen-capture-copy">
-          <span className="listen-mode-pill">
-            <Headphones size={17} aria-hidden />
-            Listen first
-          </span>
-          <h2>{hasPendingMaterial ? "Ready to listen." : "Show your page."}</h2>
-          <p>{promptText}</p>
-          <div className="listen-hero-actions">
-            <button className="listen-hear-button" type="button" onClick={onHearPrompt}>
-              <Volume2 size={20} aria-hidden />
-              Hear
-            </button>
-            <button className="listen-secondary-button" type="button" onClick={onUseSample} disabled={busy}>
-              <BookOpen size={18} aria-hidden />
-              Sample
-            </button>
+        <div className="listen-capture-single">
+          <div className="listen-capture-heading">
+            <h2>{hasPendingMaterial ? "Ready to listen" : "Upload your page"}</h2>
+            <p>{hasPendingMaterial ? "I will read it and help you by voice." : "I will read it and help you by voice."}</p>
           </div>
-        </div>
 
-        <div className="listen-capture-card">
+          <div className="listen-capture-card">
           {hasPendingMaterial ? (
-          <ListenPendingMaterials
-            materials={pendingMaterials}
-            busy={busy}
-            status={status}
-            error={error}
-            onRemove={onRemovePendingMaterial}
-            onStart={onStartSession}
-          />
+            <ListenPendingMaterials
+              materials={pendingMaterials}
+              busy={busy}
+              status={status}
+              error={error}
+              onRemove={onRemovePendingMaterial}
+              onStart={onStartSession}
+            />
           ) : (
             <CameraCapture
               busy={busy}
               variant="listen"
               onMaterialReady={onMaterialReady}
-              onHearInstructions={onHearPrompt}
             />
+          )}
+          </div>
+
+          {!hasPendingMaterial && (
+            <div className="listen-capture-quick-actions">
+              <button className="listen-secondary-button" type="button" onClick={onUseSample} disabled={busy}>
+                <BookOpen size={18} aria-hidden />
+                Sample
+              </button>
+            </div>
           )}
         </div>
       </section>
@@ -3384,7 +3370,7 @@ function ListenPromptText({
 }
 
 function ListenStatus({ status, error }: { status: string; error: string }) {
-  if (!status && !error) {
+  if ((!status || status === "Ready") && !error) {
     return null;
   }
 

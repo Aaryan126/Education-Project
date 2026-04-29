@@ -18,7 +18,7 @@ Phloem is a Next.js learning companion that turns a captured image, PDF, or Word
 
 Phloem includes an alternate voice-first UI for the core low-literacy audience. The normal dashboard remains available for users who want full session controls, materials, progress, and settings. Listen Mode strips the active learning flow down to a one-screen capture and one-button conversation experience:
 
-- capture starts with large camera/file actions and spoken instructions
+- capture starts with one centered upload/photo target and minimal secondary actions
 - the session view centers one microphone button, one changing cue, the tutor text, and a few simple actions
 - tutor speech traces inline across the full response text instead of showing a dense chat thread
 - long tutor text scrolls inside the response area while the page itself stays fixed to one viewport

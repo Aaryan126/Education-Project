@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ChevronDown, Clipboard, FileUp, Link, ScanLine, Square, Upload, Volume2 } from "lucide-react";
+import { Camera, ChevronDown, Clipboard, FileUp, Link, ScanLine, Square, Upload } from "lucide-react";
 import type { ClipboardEvent, DragEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
@@ -16,7 +16,6 @@ type CameraCaptureProps = {
   busy: boolean;
   onMaterialReady: (material: CapturedInput) => void;
   variant?: "dashboard" | "listen";
-  onHearInstructions?: () => void;
 };
 
 const acceptedUploadTypes = [
@@ -51,8 +50,7 @@ function isAcceptedFile(file: File | Blob, name = "") {
 export function CameraCapture({
   busy,
   onMaterialReady,
-  variant = "dashboard",
-  onHearInstructions
+  variant = "dashboard"
 }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -303,10 +301,10 @@ export function CameraCapture({
           {variant === "listen" ? (
             <>
               <div className="listen-upload-icon">
-                <Camera size={62} aria-hidden />
+                <FileUp size={66} aria-hidden />
               </div>
-              <h2>Show your page</h2>
-              <p>Take a photo, then talk with Phloem.</p>
+              <h2>Upload photo or file</h2>
+              <p>Take a photo or choose a file</p>
             </>
           ) : (
             <>
@@ -339,13 +337,6 @@ export function CameraCapture({
             </button>
           </div>
 
-          {variant === "listen" && onHearInstructions ? (
-            <button className="listen-hear-steps-button" type="button" onClick={onHearInstructions}>
-              <Volume2 size={20} aria-hidden />
-              Hear steps
-            </button>
-          ) : null}
-
           {variant === "dashboard" && (
             <div className="upload-divider" aria-hidden>
               <span />
@@ -354,22 +345,22 @@ export function CameraCapture({
             </div>
           )}
 
-          <div className="upload-secondary-actions">
-            {variant === "dashboard" && (
+          {variant === "dashboard" && (
+            <div className="upload-secondary-actions">
               <button className="upload-secondary-button" type="button" onClick={startCamera} disabled={busy || cameraStarting}>
                 <Camera size={20} aria-hidden />
                 {cameraStarting ? "Opening..." : "Take a photo"}
               </button>
-            )}
-            <button className="upload-secondary-button" type="button" onClick={() => void pasteImageFromClipboard()} disabled={busy}>
-              <Clipboard size={20} aria-hidden />
-              Paste image
-            </button>
-            <button className="upload-secondary-button" type="button" onClick={() => void importFromLink()} disabled={busy}>
-              <Link size={20} aria-hidden />
-              Add from link
-            </button>
-          </div>
+              <button className="upload-secondary-button" type="button" onClick={() => void pasteImageFromClipboard()} disabled={busy}>
+                <Clipboard size={20} aria-hidden />
+                Paste image
+              </button>
+              <button className="upload-secondary-button" type="button" onClick={() => void importFromLink()} disabled={busy}>
+                <Link size={20} aria-hidden />
+                Add from link
+              </button>
+            </div>
+          )}
 
           {cameraError && <p className="camera-error camera-error-light">{cameraError}</p>}
         </div>

@@ -296,7 +296,7 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 **Key UI components:**
 - `CameraCapture` -- Multi-input capture component with drag/drop, camera, paste, link
 - `ConversationPanel` -- Chat-like interface with message bubbles, quick action buttons ("Simplify this", "Give me a hint", "Summarize", "Ask a question"), voice recorder integration, speech trace visualization, stop/response controls
-- `ListenModeCapture` -- Simplified capture surface with large camera/file actions, spoken help, sample mode, and pending-material start state
+- `ListenModeCapture` -- Simplified centered capture surface with one upload/photo target, sample mode, and pending-material start state
 - `ListenModeSession` -- Simplified tutor surface with one central microphone, a single changing cue, inline tutor speech trace, internal text scrolling, and minimal actions (Help, Repeat, Type, Skip/Stop when relevant)
 - Message controls -- User and assistant messages can be copied or edited inline; saved-session edits are persisted server-side
 - `VoiceRecorder` -- Hands-free VAD microphone control with speech/start/end status, Smart Turn completion checks, and automatic transcription/submission
@@ -310,6 +310,7 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 
 **Listen Mode UX principles:**
 - The active task should fit in one viewport on common desktop and mobile sizes.
+- The first capture step should use one centered upload/photo target instead of a two-panel layout.
 - Use one primary microphone affordance instead of a chat-composer-first layout.
 - Show only one main state cue near the mic, such as "Press the microphone" or "Phloem is thinking".
 - Hide recorder micro-status text in Listen Mode when it duplicates the visible cue.
@@ -553,7 +554,7 @@ Both providers share:
 
 - [x] Provide an alternate Listen Mode entry point from capture and session screens
 - [x] Preserve the full dashboard for advanced controls, history, settings, and progress
-- [x] Offer a simplified capture screen with large camera/file actions and spoken help
+- [x] Offer a simplified centered capture screen with one large upload/photo target
 - [x] Offer a one-button tutor session with central microphone control and minimal visual choices
 - [x] Keep the active Listen Mode session within one viewport where practical
 - [x] Render tutor text as readable inline text with TTS word tracing

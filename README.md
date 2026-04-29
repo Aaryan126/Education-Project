@@ -14,6 +14,17 @@ Phloem is a Next.js learning companion that turns a captured image, PDF, or Word
 8. In hands-free mode, browser Silero VAD segments speech and `/api/speech/turn` uses Smart Turn when available before transcription.
 9. Voice answers attach lightweight interaction signals, such as incomplete pauses, long-silence fallback, short or numeric answer flags, and uncertainty markers, so tutor feedback can be more supportive without changing correctness rules by itself.
 
+## Listen Mode
+
+Phloem includes an alternate voice-first UI for the core low-literacy audience. The normal dashboard remains available for users who want full session controls, materials, progress, and settings. Listen Mode strips the active learning flow down to a one-screen capture and one-button conversation experience:
+
+- capture starts with large camera/file actions and spoken instructions
+- the session view centers one microphone button, one changing cue, the tutor text, and a few simple actions
+- tutor speech traces inline across the full response text instead of showing a dense chat thread
+- long tutor text scrolls inside the response area while the page itself stays fixed to one viewport
+- active recording turns the mic and animated orb rings red; recorder status hints are hidden in this simplified mode
+- learners can still switch back to the full dashboard or start a new page from the top actions
+
 ## Setup
 
 Install JavaScript dependencies:

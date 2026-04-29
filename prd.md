@@ -45,6 +45,7 @@ An AI-powered web application that:
 6. **Persists sessions server-side** so learners can return to previous conversations
 7. **Tracks learning progress from retrieval practice** using actual learner answers
 8. **Tracks usage and cost** across TTS providers
+9. **Offers an alternate one-button Listen Mode** for low-literacy learners who need a simpler, voice-first interface than the full dashboard
 
 ---
 
@@ -73,6 +74,14 @@ Open app -> Capture/upload material(s) -> Vision extracts context
   -> Response spoken aloud (with word-by-word highlight)
   -> Learner answers follow-up retrieval check
   -> Progress updates by concept; loop continues, difficulty adapts
+```
+
+Listen Mode variant:
+
+```
+Open Listen Mode -> Show/take a page -> Start listening
+  -> One-button tutor screen -> Hear tutor response with inline trace
+  -> Speak answer or ask a question -> Repeat / Help / Type / Skip if needed
 ```
 
 ---
@@ -281,11 +290,14 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 **Application structure:**
 - **Landing page** (capture phase): Sidebar navigation (Learn, Sessions, Materials, Progress, Settings) + main content area with greeting, upload panel, example cards, pending materials queue, processing overlay, and custom themed language menu
 - **Session page** (learn phase): Same sidebar + header with session title/page count/language + workspace with material rail (thumbnail strip + detail panel) and conversation panel
+- **Listen Mode** (alternate low-literacy flow): One-screen capture and one-button tutor session for users who can listen and speak but may not read comfortably. It keeps the existing visual style but removes dense dashboard panels from the active flow.
 - **Legacy review phase:** Two-panel layout (material rail + conversation) retained for backward compatibility
 
 **Key UI components:**
 - `CameraCapture` -- Multi-input capture component with drag/drop, camera, paste, link
 - `ConversationPanel` -- Chat-like interface with message bubbles, quick action buttons ("Simplify this", "Give me a hint", "Summarize", "Ask a question"), voice recorder integration, speech trace visualization, stop/response controls
+- `ListenModeCapture` -- Simplified capture surface with large camera/file actions, spoken help, sample mode, and pending-material start state
+- `ListenModeSession` -- Simplified tutor surface with one central microphone, a single changing cue, inline tutor speech trace, internal text scrolling, and minimal actions (Help, Repeat, Type, Skip/Stop when relevant)
 - Message controls -- User and assistant messages can be copied or edited inline; saved-session edits are persisted server-side
 - `VoiceRecorder` -- Hands-free VAD microphone control with speech/start/end status, Smart Turn completion checks, and automatic transcription/submission
 - Phase navigation -- The current app uses the sidebar and view state for Capture/Learn navigation; there is no standalone `StepIndicator` component in the current UI
@@ -296,7 +308,17 @@ Phloem now separates real learning progress from model-guessed understanding. Th
 - `MaterialsScreen` -- Library grid of uploaded materials with preview, download, session linkage, delete
 - `ProcessingOverlay` -- Full-screen spinner during material processing
 
-**Design system:** Custom vanilla CSS (~3900 lines) with CSS custom properties (design tokens). No Tailwind. Lucide React icons. Mobile-responsive layout.
+**Listen Mode UX principles:**
+- The active task should fit in one viewport on common desktop and mobile sizes.
+- Use one primary microphone affordance instead of a chat-composer-first layout.
+- Show only one main state cue near the mic, such as "Press the microphone" or "Phloem is thinking".
+- Hide recorder micro-status text in Listen Mode when it duplicates the visible cue.
+- Use red mic and red animated rings for active user recording; keep green for idle/tutor states.
+- Keep tutor text readable as normal inline text, with word tracing over the response during TTS playback.
+- Put long tutor text in an internal scroll area rather than clipping it or making the full page scroll.
+- Keep escape hatches visible: Full dashboard and New page.
+
+**Design system:** Custom vanilla CSS with CSS custom properties (design tokens). No Tailwind. Lucide React icons. Mobile-responsive layout.
 
 ---
 
@@ -525,6 +547,19 @@ Both providers share:
 - [x] Load persisted checks and concept mastery with saved sessions
 - [x] Show concept-level progress cards, mastery, status counts, recent checks, and next review times
 - [x] Delete skipped active checks from persisted progress
+
+### 7.9 Low-Literacy Listen Mode
+
+- [x] Provide an alternate Listen Mode entry point from capture and session screens
+- [x] Preserve the full dashboard for advanced controls, history, settings, and progress
+- [x] Offer a simplified capture screen with large camera/file actions and spoken help
+- [x] Offer a one-button tutor session with central microphone control and minimal visual choices
+- [x] Keep the active Listen Mode session within one viewport where practical
+- [x] Render tutor text as readable inline text with TTS word tracing
+- [x] Allow long tutor responses to scroll inside the response area without clipping
+- [x] Use red visual treatment for active user recording, including the mic and animated rings
+- [x] Hide duplicate recorder status text in Listen Mode
+- [x] Keep Full dashboard and New page actions available as escape hatches
 
 ---
 
